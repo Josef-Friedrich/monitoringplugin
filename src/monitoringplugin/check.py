@@ -12,6 +12,7 @@ delegate control to it.
 """
 
 import logging
+from typing import Any, NoReturn
 
 from .context import Context, Contexts
 from .error import CheckError
@@ -79,7 +80,7 @@ class Check(object):
                 raise TypeError("cannot add type {0} to check".format(type(obj)), obj)
         return self
 
-    def _evaluate_resource(self, resource):
+    def _evaluate_resource(self, resource: Resource) -> None:
         try:
             metric = None
             metrics = resource.probe()
@@ -119,7 +120,7 @@ class Check(object):
             self._evaluate_resource(resource)
         self.perfdata = sorted([p for p in self.perfdata if p])
 
-    def main(self, verbose=None, timeout=None):
+    def main(self, verbose: Any = None, timeout: Any = None) -> NoReturn:
         """All-in-one control delegation to the runtime environment.
 
         Get a :class:`~monitoringplugin.runtime.Runtime` instance and
@@ -134,7 +135,7 @@ class Check(object):
         runtime.execute(self, verbose, timeout)
 
     @property
-    def state(self):
+    def state(self) -> ServiceState:
         """Overall check state.
 
         The most significant (=worst) state seen in :attr:`results` to
@@ -148,7 +149,7 @@ class Check(object):
             return Unknown
 
     @property
-    def summary_str(self):
+    def summary_str(self) -> str:
         """Status line summary string.
 
         The first line of output that summarizes that situation as
@@ -173,7 +174,7 @@ class Check(object):
         return self.summary.verbose(self.results) or ""
 
     @property
-    def exitcode(self):
+    def exitcode(self) -> int:
         """Overall check exit code according to the Nagios API.
 
         Corresponds with :attr:`state`. Read-only property.

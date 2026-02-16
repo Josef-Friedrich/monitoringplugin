@@ -13,10 +13,15 @@ import logging
 import numbers
 import sys
 import traceback
+import typing
+from typing import Any, NoReturn, Optional
 
 from .error import Timeout
 from .output import Output
 from .platform import with_timeout
+
+if typing.TYPE_CHECKING:
+    from monitoringplugin.check import Check
 
 
 def guarded(original_function=None, verbose=None):
@@ -67,32 +72,30 @@ def guarded(original_function=None, verbose=None):
     return _decorate
 
 
-class Runtime(object):
+class Runtime:
     instance = None
-    check = None
+    check: Optional["Check"] = None
     _verbose = 1
-    timeout = None
-    logchan = None
-    output = None
+    timeout: Optional[int] = None
+    logchan: logging.StreamHandler[io.StringIO]
+    output: Output
     stdout = None
-    exitcode = 70  # EX_SOFTWARE
+    exitcode: int = 70  # EX_SOFTWARE
 
     def __new__(cls):
         if not cls.instance:
             cls.instance = super(Runtime, cls).__new__(cls)
         return cls.instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         rootlogger = logging.getLogger(__name__.split(".", 1)[0])
         rootlogger.setLevel(logging.DEBUG)
-        if not self.logchan:
-            self.logchan = logging.StreamHandler(io.StringIO())
-            self.logchan.setFormatter(logging.Formatter("%(message)s"))
-            rootlogger.addHandler(self.logchan)
-        if not self.output:
-            self.output = Output(self.logchan)
+        self.logchan = logging.StreamHandler(io.StringIO())
+        self.logchan.setFormatter(logging.Formatter("%(message)s"))
+        rootlogger.addHandler(self.logchan)
+        self.output = Output(self.logchan)
 
-    def _handle_exception(self, statusline=None):
+    def _handle_exception(self, statusline: Optional[str] = None) -> NoReturn:
         exc_type, value = sys.exc_info()[0:2]
         name = self.check.name.upper() + " " if self.check else ""
         self.output.status = "{0}UNKNOWN: {1}".format(
@@ -106,11 +109,11 @@ class Runtime(object):
         self.sysexit()
 
     @property
-    def verbose(self):
+    def verbose(self) -> int:
         return self._verbose
 
     @verbose.setter
-    def verbose(self, verbose):
+    def verbose(self, verbose: Any) -> None:
         if isinstance(verbose, numbers.Number):
             self._verbose = int(verbose)
         else:
@@ -124,12 +127,14 @@ class Runtime(object):
             self.logchan.setLevel(logging.WARNING)
         self.output.verbose = self._verbose
 
-    def run(self, check):
+    def run(self, check: "Check"):
         check()
         self.output.add(check)
         self.exitcode = check.exitcode
 
-    def execute(self, check, verbose=None, timeout=None):
+    def execute(
+        self, check: "Check", verbose: Any = None, timeout: Any = None
+    ) -> NoReturn:
         self.check = check
         if verbose is not None:
             self.verbose = verbose
@@ -142,5 +147,5 @@ class Runtime(object):
         print("{0}".format(self.output), end="", file=self.stdout)
         self.sysexit()
 
-    def sysexit(self):
+    def sysexit(self) -> NoReturn:
         sys.exit(self.exitcode)
