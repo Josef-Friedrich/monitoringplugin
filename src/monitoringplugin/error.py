@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Exceptions with special meanings for nagiosplugin."""
+"""Exceptions with special meanings for monitoringplugin."""
 
 
 class CheckError(RuntimeError):
@@ -17,7 +17,7 @@ class CheckError(RuntimeError):
 class Timeout(RuntimeError):
     """Maximum check run time exceeded.
 
-    This exception is raised internally by nagiosplugin if the check's
+    This exception is raised internally by monitoringplugin if the check's
     run time takes longer than allowed. Check execution is aborted and
     the plugin exits with an UNKNOWN (3) status.
     """

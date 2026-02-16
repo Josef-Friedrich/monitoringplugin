@@ -6,10 +6,7 @@ import monitoringplugin
 from monitoringplugin.compat import StringIO
 from monitoringplugin.runtime import Runtime, guarded
 
-try:
-    import unittest2 as unittest
-except ImportError:  # pragma: no cover
-    import unittest
+
 
 
 def make_check():
@@ -35,7 +32,7 @@ class TestRuntimeBase:
         self.r.stdout = StringIO()
 
 
-class RuntimeTest(RuntimeTestBase):
+class RuntimeTest(TestRuntimeBase):
     def test_runtime_is_singleton(self):
         assert self.r == Runtime()
 
@@ -67,7 +64,7 @@ class RuntimeTest(RuntimeTestBase):
         assert 10 == self.r.timeout
 
 
-class RuntimeExceptionTest(RuntimeTestBase):
+class RuntimeExceptionTest(TestRuntimeBase):
     def setup_method(self):
         super(RuntimeExceptionTest, self).setUp()
 

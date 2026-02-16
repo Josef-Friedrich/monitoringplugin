@@ -19,11 +19,11 @@ import argparse
 import itertools
 import re
 
-import nagiosplugin
+import monitoringplugin
 import numpy
 
 
-class HAProxyLog(nagiosplugin.Resource):
+class HAProxyLog(monitoringplugin.Resource):
     """haproxy.log parser.
 
     Goes through a haproxy log file and extracts total request time
@@ -42,8 +42,8 @@ class HAProxyLog(nagiosplugin.Resource):
 
     def parse_log(self):
         """Yields ttot and error status for each log line."""
-        cookie = nagiosplugin.Cookie(self.statefile)
-        with nagiosplugin.LogTail(self.logfile, cookie) as logfile:
+        cookie = monitoringplugin.Cookie(self.statefile)
+        with monitoringplugin.LogTail(self.logfile, cookie) as logfile:
             for line in logfile:
                 match = self.r_logline.search(line.decode())
                 if not match:
@@ -62,7 +62,7 @@ class HAProxyLog(nagiosplugin.Resource):
         if requests:
             for pct in self.percentiles:
                 metrics.append(
-                    nagiosplugin.Metric(
+                    monitoringplugin.Metric(
                         "ttot%s" % pct,
                         numpy.percentile(data["ttot"], int(pct)) / 1000.0,
                         "s",
@@ -71,8 +71,8 @@ class HAProxyLog(nagiosplugin.Resource):
                 )
         error_rate = 100 * numpy.sum(data["err"] / requests) if requests else 0
         metrics += [
-            nagiosplugin.Metric("error_rate", error_rate, "%", 0, 100),
-            nagiosplugin.Metric("request_total", requests, min=0, context="default"),
+            monitoringplugin.Metric("error_rate", error_rate, "%", 0, 100),
+            monitoringplugin.Metric("request_total", requests, min=0, context="default"),
         ]
         return metrics
 
@@ -86,14 +86,14 @@ def parse_args():
         "--tw",
         "--ttot-warning",
         metavar="RANGE[,RANGE,...]",
-        type=nagiosplugin.MultiArg,
+        type=monitoringplugin.MultiArg,
         default="",
     )
     argp.add_argument(
         "--tc",
         "--ttot-critical",
         metavar="RANGE[,RANGE,...]",
-        type=nagiosplugin.MultiArg,
+        type=monitoringplugin.MultiArg,
         default="",
     )
     argp.add_argument(
@@ -122,17 +122,17 @@ def parse_args():
     return argp.parse_args()
 
 
-@nagiosplugin.guarded
+@monitoringplugin.guarded
 def main():
     args = parse_args()
     percentiles = args.percentiles.split(",")
-    check = nagiosplugin.Check(
+    check = monitoringplugin.Check(
         HAProxyLog(args.logfile, args.state_file, percentiles),
-        nagiosplugin.ScalarContext("error_rate", args.ew, args.ec),
+        monitoringplugin.ScalarContext("error_rate", args.ew, args.ec),
     )
     for pct, i in zip(percentiles, itertools.count()):
         check.add(
-            nagiosplugin.ScalarContext(
+            monitoringplugin.ScalarContext(
                 "ttot%s" % pct,
                 args.tw[i],
                 args.tc[i],

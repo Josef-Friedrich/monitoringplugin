@@ -4,7 +4,7 @@
 import os
 
 platform = __import__(
-    "nagiosplugin.platform.{0}".format(os.name),
+    "monitoringplugin.platform.{0}".format(os.name),
     fromlist=["with_timeout", "flock_exclusive"],
 )
 

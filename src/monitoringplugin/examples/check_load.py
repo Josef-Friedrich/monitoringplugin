@@ -5,15 +5,15 @@ import argparse
 import logging
 import subprocess
 
-import nagiosplugin
+import monitoringplugin
 
-_log = logging.getLogger("nagiosplugin")
+_log = logging.getLogger("monitoringplugin")
 
 
 # data acquisition
 
 
-class Load(nagiosplugin.Resource):
+class Load(monitoringplugin.Resource):
     """Domain model: system load.
 
     Determines the system load parameters and (optionally) cpu count.
@@ -41,13 +41,13 @@ class Load(nagiosplugin.Resource):
         cpus = self.cpus() if self.percpu else 1
         load = [float(l) / cpus for l in load]
         for i, period in enumerate([1, 5, 15]):
-            yield nagiosplugin.Metric("load%d" % period, load[i], min=0, context="load")
+            yield monitoringplugin.Metric("load%d" % period, load[i], min=0, context="load")
 
 
 # data presentation
 
 
-class LoadSummary(nagiosplugin.Summary):
+class LoadSummary(monitoringplugin.Summary):
     """Status line conveying load information.
 
     We specialize the `ok` method to present all three figures in one
@@ -69,7 +69,7 @@ class LoadSummary(nagiosplugin.Summary):
 # runtime environment and data evaluation
 
 
-@nagiosplugin.guarded
+@monitoringplugin.guarded
 def main():
     argp = argparse.ArgumentParser(description=__doc__)
     argp.add_argument(
@@ -95,9 +95,9 @@ def main():
         help="increase output verbosity (use up to 3 times)",
     )
     args = argp.parse_args()
-    check = nagiosplugin.Check(
+    check = monitoringplugin.Check(
         Load(args.percpu),
-        nagiosplugin.ScalarContext("load", args.warning, args.critical),
+        monitoringplugin.ScalarContext("load", args.warning, args.critical),
         LoadSummary(args.percpu),
     )
     check.main(verbose=args.verbose)

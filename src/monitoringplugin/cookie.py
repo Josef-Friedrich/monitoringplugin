@@ -5,7 +5,7 @@ Cookies are used to remember file positions, counters and the like
 between plugin invocations. It is not intended for substantial amounts
 of data. Cookies are serialized into JSON and saved to a state file. We
 prefer a plain text format to allow administrators to inspect and edit
-its content. See :class:`~nagiosplugin.logtail.LogTail` for an
+its content. See :class:`~monitoringplugin.logtail.LogTail` for an
 application of cookies to get only new lines of a continuously growing
 file.
 

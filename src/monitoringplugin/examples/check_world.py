@@ -2,16 +2,16 @@
 
 """Hello world Nagios check."""
 
-import nagiosplugin
+import monitoringplugin
 
 
-class World(nagiosplugin.Resource):
+class World(monitoringplugin.Resource):
     def probe(self):
-        return [nagiosplugin.Metric("world", True, context="null")]
+        return [monitoringplugin.Metric("world", True, context="null")]
 
 
 def main():
-    check = nagiosplugin.Check(World())
+    check = monitoringplugin.Check(World())
     check.main()
 
 

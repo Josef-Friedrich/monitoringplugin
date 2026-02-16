@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import nagiosplugin
+import monitoringplugin
 import pytest
-from nagiosplugin.result import Result, Results
-from nagiosplugin.state import Critical, Ok, Unknown, Warn
+from monitoringplugin.result import Result, Results
+from monitoringplugin.state import Critical, Ok, Unknown, Warn
 
 try:
     import unittest2 as unittest
@@ -16,7 +16,7 @@ class TestResult:
 
     def test_metric_resorce(self):
         res = object()
-        m = nagiosplugin.Metric("foo", 1, resource=res)
+        m = monitoringplugin.Metric("foo", 1, resource=res)
         assert Result(Ok, metric=m).resource == res
 
     def test_context_should_be_none_for_contextless_metric(self):
@@ -24,16 +24,16 @@ class TestResult:
 
     def test_metric_context(self):
         ctx = object()
-        m = nagiosplugin.Metric("foo", 1, contextobj=ctx)
+        m = monitoringplugin.Metric("foo", 1, contextobj=ctx)
         assert Result(Ok, metric=m).context == ctx
 
     def test_str_metric_with_hint(self):
         assert "2 (unexpected)" == str(
-            Result(Warn, "unexpected", nagiosplugin.Metric("foo", 2))
+            Result(Warn, "unexpected", monitoringplugin.Metric("foo", 2))
         )
 
     def test_str_metric_only(self):
-        assert "3" == str(Result(Warn, metric=nagiosplugin.Metric("foo", 3)))
+        assert "3" == str(Result(Warn, metric=monitoringplugin.Metric("foo", 3)))
 
     def test_str_hint_only(self):
         assert "how come?" == str(Result(Warn, "how come?"))
@@ -45,13 +45,13 @@ class TestResult:
 class TestResults:
     def test_lookup_by_metric_name(self):
         r = Results()
-        result = Result(Ok, "", nagiosplugin.Metric("met1", 0))
+        result = Result(Ok, "", monitoringplugin.Metric("met1", 0))
         r.add(result, Result(Ok, "other"))
         assert r["met1"] == result
 
     def test_lookup_by_index(self):
         r = Results()
-        result = Result(Ok, "", nagiosplugin.Metric("met1", 0))
+        result = Result(Ok, "", monitoringplugin.Metric("met1", 0))
         r.add(Result(Ok, "other"), result)
         assert r[1] == result
 
@@ -95,7 +95,7 @@ class TestResults:
 
     def test_contains(self):
         results = Results()
-        r1 = Result(Unknown, "r1", nagiosplugin.Metric("m1", 1))
+        r1 = Result(Unknown, "r1", monitoringplugin.Metric("m1", 1))
         results.add(r1)
         assert "m1" in results
         assert not "m2" in results

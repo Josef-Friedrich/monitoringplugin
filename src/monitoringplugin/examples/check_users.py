@@ -5,12 +5,12 @@ import argparse
 import logging
 import subprocess
 
-import nagiosplugin
+import monitoringplugin
 
-_log = logging.getLogger("nagiosplugin")
+_log = logging.getLogger("monitoringplugin")
 
 
-class Users(nagiosplugin.Resource):
+class Users(monitoringplugin.Resource):
     """Domain model: system logins.
 
     The `Users` class is a model of system aspects relevant for this
@@ -43,7 +43,7 @@ class Users(nagiosplugin.Resource):
                 _log.debug("who output: %s", line.strip())
                 users.append(line.split()[0].decode())
         except OSError:
-            raise nagiosplugin.CheckError(
+            raise monitoringplugin.CheckError(
                 "cannot determine number of users ({0} failed)".format(self.who_cmd)
             )
         return users
@@ -59,12 +59,12 @@ class Users(nagiosplugin.Resource):
         self.users = self.list_users()
         self.unique_users = set(self.users)
         return [
-            nagiosplugin.Metric("total", len(self.users), min=0),
-            nagiosplugin.Metric("unique", len(self.unique_users), min=0),
+            monitoringplugin.Metric("total", len(self.users), min=0),
+            monitoringplugin.Metric("unique", len(self.unique_users), min=0),
         ]
 
 
-class UsersSummary(nagiosplugin.Summary):
+class UsersSummary(monitoringplugin.Summary):
     """Create status line and long output.
 
     For the status line, the text snippets created by the contexts work
@@ -81,7 +81,7 @@ class UsersSummary(nagiosplugin.Summary):
         return None
 
 
-@nagiosplugin.guarded
+@monitoringplugin.guarded
 def main():
     argp = argparse.ArgumentParser()
     argp.add_argument(
@@ -119,12 +119,12 @@ def main():
         "-t", "--timeout", default=10, help="abort execution after TIMEOUT seconds"
     )
     args = argp.parse_args()
-    check = nagiosplugin.Check(
+    check = monitoringplugin.Check(
         Users(),
-        nagiosplugin.ScalarContext(
+        monitoringplugin.ScalarContext(
             "total", args.warning, args.critical, fmt_metric="{value} users logged in"
         ),
-        nagiosplugin.ScalarContext(
+        monitoringplugin.ScalarContext(
             "unique",
             args.warning_unique,
             args.critical_unique,

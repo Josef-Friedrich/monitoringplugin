@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 import tempfile
 
-import nagiosplugin
+import monitoringplugin
 import pytest
-from nagiosplugin.logtail import LogTail
+from monitoringplugin.logtail import LogTail
 
 
 class TestLogTail:
     def setup_method(self):
         self.lf = tempfile.NamedTemporaryFile(prefix="log.")
         self.cf = tempfile.NamedTemporaryFile(prefix="cookie.")
-        self.cookie = nagiosplugin.Cookie(self.cf.name)
+        self.cookie = monitoringplugin.Cookie(self.cf.name)
 
     def teardown_method(self):
         self.cf.close()

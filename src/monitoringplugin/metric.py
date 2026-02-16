@@ -2,7 +2,7 @@
 """Structured representation for data points.
 
 This module contains the :class:`Metric` class whose instances are
-passed as value objects between most of nagiosplugin's core classes.
+passed as value objects between most of monitoringplugin's core classes.
 Typically, :class:`~.resource.Resource` objects emit a list of metrics
 as result of their :meth:`~.resource.Resource.probe` methods.
 """
@@ -49,10 +49,10 @@ class Metric(
         :param context: name of the associated context (defaults to the
             metric's name if left out)
         :param contextobj: reference to the associated context object
-            (set automatically by :class:`~nagiosplugin.check.Check`)
+            (set automatically by :class:`~monitoringplugin.check.Check`)
         :param resource: reference to the originating
-            :class:`~nagiosplugin.resource.Resource` (set automatically
-            by :class:`~nagiosplugin.check.Check`)
+            :class:`~monitoringplugin.resource.Resource` (set automatically
+            by :class:`~monitoringplugin.check.Check`)
         """
         return tuple.__new__(
             cls, (name, value, uom, min, max, context or name, contextobj, resource)
@@ -101,7 +101,7 @@ class Metric(
     def evaluate(self):
         """Evaluates this instance according to the context.
 
-        :return: :class:`~nagiosplugin.result.Result` object
+        :return: :class:`~monitoringplugin.result.Result` object
         :raise RuntimeError: if no context has been associated yet
         """
         if not self.contextobj:
@@ -111,7 +111,7 @@ class Metric(
     def performance(self):
         """Generates performance data according to the context.
 
-        :return: :class:`~nagiosplugin.performance.Performance` object
+        :return: :class:`~monitoringplugin.performance.Performance` object
         :raise RuntimeError: if no context has been associated yet
         """
         if not self.contextobj:

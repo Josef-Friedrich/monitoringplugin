@@ -21,9 +21,9 @@ class Result(collections.namedtuple("Result", "state hint metric")):
     """Evaluation outcome consisting of state and explanation.
 
     A Result object is typically emitted by a
-    :class:`~nagiosplugin.context.Context` object and represents the
+    :class:`~monitoringplugin.context.Context` object and represents the
     outcome of an evaluation. It contains a
-    :class:`~nagiosplugin.state.ServiceState` as well as an explanation.
+    :class:`~monitoringplugin.state.ServiceState` as well as an explanation.
     Plugin authors may subclass Result to implement specific features.
     """
 
@@ -33,7 +33,7 @@ class Result(collections.namedtuple("Result", "state hint metric")):
         :param state: state object
         :param hint: reason why this result arose
         :param metric: reference to the
-            :class:`~nagiosplugin.metric.Metric` from which this result
+            :class:`~monitoringplugin.metric.Metric` from which this result
             was derived
         """
         return tuple.__new__(cls, (state, hint, metric))
@@ -171,7 +171,7 @@ class Results:
     def most_significant_state(self):
         """The "worst" state found in all results.
 
-        :returns: :obj:`~nagiosplugin.state.ServiceState` object
+        :returns: :obj:`~monitoringplugin.state.ServiceState` object
         :raises ValueError: if no results are present
         """
         return max(self.by_state.keys())

@@ -51,10 +51,10 @@ class Check(object):
         """Adds domain objects to a check.
 
         :param objects: one or more objects that are descendants from
-            :class:`~nagiosplugin.resource.Resource`,
-            :class:`~nagiosplugin.context.Context`,
-            :class:`~nagiosplugin.summary.Summary`, or
-            :class:`~nagiosplugin.result.Results`.
+            :class:`~monitoringplugin.resource.Resource`,
+            :class:`~monitoringplugin.context.Context`,
+            :class:`~monitoringplugin.summary.Summary`, or
+            :class:`~monitoringplugin.result.Results`.
         """
         for obj in objects:
             if isinstance(obj, Resource):
@@ -116,7 +116,7 @@ class Check(object):
     def main(self, verbose=None, timeout=None):
         """All-in-one control delegation to the runtime environment.
 
-        Get a :class:`~nagiosplugin.runtime.Runtime` instance and
+        Get a :class:`~monitoringplugin.runtime.Runtime` instance and
         perform all phases: run the check (via :meth:`__call__`), print
         results and exit the program with an appropriate status code.
 
@@ -132,7 +132,7 @@ class Check(object):
         """Overall check state.
 
         The most significant (=worst) state seen in :attr:`results` to
-        far. :obj:`~nagiosplugin.state.Unknown` if no results have been
+        far. :obj:`~monitoringplugin.state.Unknown` if no results have been
         collected yet. Corresponds with :attr:`exitcode`. Read-only
         property.
         """
@@ -162,7 +162,7 @@ class Check(object):
         """Additional lines of output.
 
         Long text output if check runs in verbose mode. Also queried
-        from :class:`~nagiosplugin.summary.Summary`. Read-only property.
+        from :class:`~monitoringplugin.summary.Summary`. Read-only property.
         """
         return self.summary.verbose(self.results) or ""
 

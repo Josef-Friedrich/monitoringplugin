@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import time
 
-import nagiosplugin
+import monitoringplugin
 import pytest
-from nagiosplugin.platform import with_timeout
+from monitoringplugin.platform import with_timeout
 
 try:
     import unittest2 as unittest
@@ -13,5 +13,5 @@ except ImportError:  # pragma: no cover
 
 class TestPlatform:
     def test_timeout(self):
-        with pytest.raises(nagiosplugin.Timeout):
+        with pytest.raises(monitoringplugin.Timeout):
             with_timeout(1, time.sleep, 2)

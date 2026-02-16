@@ -5,7 +5,7 @@ Performance data (perfdata) representation.
 :term:`Performance data` are created during metric evaluation in a context
 and are written into the *perfdata* section of the plugin's output.
 :class:`Performance` allows the creation of value objects that are passed
-between other nagiosplugin objects.
+between other monitoringplugin objects.
 
 For sake of consistency, performance data should represent their values in
 their respective base unit, so `Performance('size', 10000, 'B')` is better
