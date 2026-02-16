@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Controller logic for check execution.
 
 This module contains the :class:`Check` class which orchestrates the

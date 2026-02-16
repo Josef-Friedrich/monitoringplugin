@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Structured representation for data points.
 
 This module contains the :class:`Metric` class whose instances are

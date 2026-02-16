@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .check import Check  # noqa: F401
 from .context import Context, ScalarContext  # noqa: F401
 from .cookie import Cookie  # noqa: F401

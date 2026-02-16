@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Functions and classes to interface with the system.
 
 This module contains the :class:`Runtime` class that handles exceptions,

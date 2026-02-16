@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """NT implementation of platform-specific services."""
 
 # This only loads on Windows

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Outcomes from evaluating metrics in contexts.
 
 The :class:`Result` class is the base class for all evaluation results.

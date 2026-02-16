@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classes  to represent check outcomes.
 
 This module defines :class:`ServiceState` which is the abstract base class
