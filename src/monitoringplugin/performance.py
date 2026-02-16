@@ -17,7 +17,7 @@ import typing
 from typing import Any, Literal, NamedTuple, Optional
 
 if typing.TYPE_CHECKING:
-    from .range import RangOrString
+    from .range import RangeOrString
 
 
 def zap_none(val: Any | None) -> Any | Literal[""]:
@@ -39,8 +39,8 @@ class Performance(
             ("label", str),
             ("value", Any),
             ("uom", str),
-            ("warn", "RangOrString"),
-            ("crit", "RangOrString"),
+            ("warn", "RangeOrString"),
+            ("crit", "RangeOrString"),
             ("min", float),
             ("max", float),
         ],
@@ -54,8 +54,8 @@ class Performance(
         label: str,
         value: Any,
         uom: str = "",
-        warn: "RangOrString" = "",
-        crit: "RangOrString" = "",
+        warn: "RangeOrString" = "",
+        crit: "RangeOrString" = "",
         min: Optional[float] = None,
         max: Optional[float] = None,
     ):  # noqa: F821

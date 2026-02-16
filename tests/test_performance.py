@@ -4,16 +4,16 @@ from monitoringplugin.performance import Performance
 
 
 class TestPerformance:
-    def test_normal_label(self):
+    def test_normal_label(self) -> None:
         assert "d=10" == str(Performance("d", 10))
 
-    def test_label_quoted(self):
+    def test_label_quoted(self) -> None:
         assert "'d d'=10" == str(Performance("d d", 10))
 
-    def test_label_must_not_contain_quotes(self):
+    def test_label_must_not_contain_quotes(self) -> None:
         with pytest.raises(RuntimeError):
             str(Performance("d'", 10))
 
-    def test_label_must_not_contain_equals(self):
+    def test_label_must_not_contain_equals(self) -> None:
         with pytest.raises(RuntimeError):
             str(Performance("d=", 10))
