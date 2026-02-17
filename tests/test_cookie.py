@@ -1,4 +1,3 @@
-import codecs
 import os
 import tempfile
 
@@ -88,7 +87,7 @@ class TestCookie:
         c.close()
 
     def test_cookie_format_exception_truncates_file(self):
-        with codecs.open(self.tf.name, "w", "utf-8") as f:
+        with open(self.tf.name, "w") as f:
             f.write("{slö@@ä")
         c = Cookie(self.tf.name)
         try:

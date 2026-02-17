@@ -14,7 +14,6 @@ access to it. Changes to the dict are not reflected in the file until
 context manager to get it opened and committed automatically.
 """
 
-import codecs
 import json
 import os
 from collections import UserDict
@@ -95,9 +94,9 @@ class Cookie(UserDict[str, Any]):
             )
         # mode='a+' has problems with mixed R/W operation on Mac OS X
         try:
-            return codecs.open(self.path, "r+", encoding="ascii")
+            return open(self.path, "r+", encoding="ascii")
         except IOError:
-            return codecs.open(self.path, "w+", encoding="ascii")
+            return open(self.path, "w+", encoding="ascii")
 
     def _load(self):
         self.fobj.seek(0)
