@@ -51,14 +51,14 @@ class ServiceState:
             and self.code > other.code
         )
 
-    def __eq__(self, value: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:
         return (
-            hasattr(value, "code")
-            and isinstance(value.code, int)
-            and self.code == value.code
-            and hasattr(value, "text")
-            and isinstance(value.text, str)
-            and self.text == value.text
+            hasattr(other, "code")
+            and isinstance(other.code, int)
+            and self.code == other.code
+            and hasattr(other, "text")
+            and isinstance(other.text, str)
+            and self.text == other.text
         )
 
     def __hash__(self) -> int:

@@ -11,7 +11,6 @@ accept custom Result subclasses in the `result_cls` parameter.
 
 import collections
 import typing
-import warnings
 from typing import Optional, Union
 
 from monitoringplugin.state import ServiceState
@@ -95,24 +94,6 @@ class Result:
             and self.hint == value.hint
             and self.metric == value.metric
         )
-
-
-class ScalarResult(Result):  # pragma: no cover
-    """Special-case result for evaluation in a ScalarContext.
-
-    DEPRECATED: use Result instead.
-    """
-
-    def __new__(
-        cls,
-        state: "ServiceState",
-        hint: Optional[str] = None,
-        metric: Optional["Metric"] = None,
-    ):
-        warnings.warn(
-            "ScalarResult is deprecated, use Result instead!", DeprecationWarning
-        )
-        return tuple.__new__(cls, (state, hint, metric))
 
 
 class Results:

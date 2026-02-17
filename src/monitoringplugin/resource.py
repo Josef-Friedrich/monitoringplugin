@@ -18,7 +18,7 @@ if typing.TYPE_CHECKING:
     from .metric import Metric
 
 
-class Resource(object):
+class Resource:
     """Abstract base class for custom domain models.
 
     Subclasses may add arguments to the constructor to parametrize
