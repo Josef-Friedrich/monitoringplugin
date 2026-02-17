@@ -5,7 +5,7 @@ timeouts and logging. Plugin authors should not use Runtime directly,
 but decorate the plugin's main function with :func:`~.runtime.guarded`.
 """
 
-from __future__ import print_function, unicode_literals
+from __future__ import annotations
 
 import functools
 import io

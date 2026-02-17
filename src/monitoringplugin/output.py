@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 from io import StringIO
 from logging import StreamHandler

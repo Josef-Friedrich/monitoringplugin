@@ -18,9 +18,11 @@ import codecs
 import json
 import os
 from collections import UserDict
-from typing import Any, Optional, Self
+from tempfile import TemporaryFile
+from typing import Any, Optional
 
-from .compat import TemporaryFile
+from typing_extensions import Self
+
 from .platform import flock_exclusive
 
 
@@ -88,7 +90,9 @@ class Cookie(UserDict[str, Any]):
 
     def _create_fobj(self):
         if not self.path:
-            return TemporaryFile("w+", encoding="ascii", prefix="oblivious_cookie_")
+            return TemporaryFile(
+                "w+", encoding="ascii", prefix="oblivious_cookie_", dir=None
+            )
         # mode='a+' has problems with mixed R/W operation on Mac OS X
         try:
             return codecs.open(self.path, "r+", encoding="ascii")

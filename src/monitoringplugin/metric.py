@@ -8,7 +8,9 @@ as result of their :meth:`~.resource.Resource.probe` methods.
 
 import numbers
 import typing
-from typing import Any, Optional, Self, TypedDict, Unpack
+from typing import Any, Optional, TypedDict
+
+from typing_extensions import Self, Unpack
 
 from monitoringplugin.performance import Performance
 

@@ -1,9 +1,9 @@
 import logging
+from io import StringIO
 
 import pytest
 
 import monitoringplugin
-from monitoringplugin.compat import StringIO
 from monitoringplugin.runtime import Runtime, guarded
 
 

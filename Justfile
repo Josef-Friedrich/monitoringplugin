@@ -3,6 +3,8 @@ all: upgrade test format lint type_check
 
 # Execute the tests
 test:
+	uv run --isolated --python=3.10 pytest -m "not (slow or gui)"
+	uv run --isolated --python=3.11 pytest -m "not (slow or gui)"
 	uv run --isolated --python=3.12 pytest -m "not (slow or gui)"
 	uv run --isolated --python=3.13 pytest -m "not (slow or gui)"
 	uv run --isolated --python=3.14 pytest -m "not (slow or gui)"
