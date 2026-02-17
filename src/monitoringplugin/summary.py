@@ -13,8 +13,6 @@ usable, plugin authors should consider subclassing to provide a specific
 implementation that gets the output to the point.
 """
 
-from __future__ import unicode_literals
-
 import typing
 
 from .state import Ok

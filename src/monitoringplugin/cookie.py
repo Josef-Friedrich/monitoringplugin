@@ -17,13 +17,17 @@ context manager to get it opened and committed automatically.
 import codecs
 import json
 import os
+from collections import UserDict
+from typing import Any, Optional, Self
 
-from .compat import TemporaryFile, UserDict
+from .compat import TemporaryFile
 from .platform import flock_exclusive
 
 
-class Cookie(UserDict, object):
-    def __init__(self, statefile=None):
+class Cookie(UserDict[str, Any]):
+    path: Optional[str]
+
+    def __init__(self, statefile: Optional[str] = None) -> None:
         """Creates a persistent dict to keep state.
 
         After creation, a cookie behaves like a normal dict.
@@ -40,7 +44,7 @@ class Cookie(UserDict, object):
         self.path = statefile
         self.fobj = None
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Allows Cookie to be used as context manager.
 
         Opens the file and passes a dict-like object into the
@@ -53,7 +57,7 @@ class Cookie(UserDict, object):
         self.open()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if not exc_type:
             self.commit()
         self.close()
@@ -100,7 +104,7 @@ class Cookie(UserDict, object):
             )
         return data
 
-    def close(self):
+    def close(self) -> None:
         """Closes a cookie and its underlying state file.
 
         This method has no effect if the cookie is already closed.
@@ -112,7 +116,7 @@ class Cookie(UserDict, object):
         self.fobj.close()
         self.fobj = None
 
-    def commit(self):
+    def commit(self) -> None:
         """Persists the cookie's dict items in the state file.
 
         The cookies content is serialized as JSON string and saved to

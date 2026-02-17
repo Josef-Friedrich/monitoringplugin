@@ -6,13 +6,6 @@ compatibility issues.
 
 import tempfile
 
-# UserDict
-try:
-    # pylint: disable-next=unused-import
-    from collections import UserDict
-except ImportError:
-    from UserDict import UserDict  # noqa: F401
-
 # StringIO
 try:
     # pylint: disable-next=unused-import

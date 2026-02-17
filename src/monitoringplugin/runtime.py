@@ -10,7 +10,6 @@ from __future__ import print_function, unicode_literals
 import functools
 import io
 import logging
-import numbers
 import sys
 import traceback
 import typing
@@ -114,7 +113,9 @@ class Runtime:
 
     @verbose.setter
     def verbose(self, verbose: Any) -> None:
-        if isinstance(verbose, numbers.Number):
+        if isinstance(verbose, int):
+            self._verbose = verbose
+        elif isinstance(verbose, float):
             self._verbose = int(verbose)
         else:
             self._verbose = len(verbose or [])
