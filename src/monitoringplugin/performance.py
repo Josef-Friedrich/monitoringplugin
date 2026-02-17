@@ -1,16 +1,3 @@
-"""
-Performance data (perfdata) representation.
-
-:term:`Performance data` are created during metric evaluation in a context
-and are written into the *perfdata* section of the plugin's output.
-:class:`Performance` allows the creation of value objects that are passed
-between other monitoringplugin objects.
-
-For sake of consistency, performance data should represent their values in
-their respective base unit, so `Performance('size', 10000, 'B')` is better
-than `Performance('size', 10, 'kB')`.
-"""
-
 import re
 import typing
 from typing import Any, Optional
@@ -28,13 +15,40 @@ def quote(label: str) -> str:
 
 
 class Performance:
+    """
+    Performance data (perfdata) representation.
+
+    :term:`Performance data` are created during metric evaluation in a context
+    and are written into the *perfdata* section of the plugin's output.
+    :class:`Performance` allows the creation of value objects that are passed
+    between other monitoringplugin objects.
+
+    For sake of consistency, performance data should represent their values in
+    their respective base unit, so `Performance('size', 10000, 'B')` is better
+    than `Performance('size', 10, 'kB')`.
+    https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/monitoring_plugins_interface/03.Output.md#performance-data
+    """
+
     label: str
+    """short identifier, results in graph titles for example (20 chars or less recommended)"""
+
     value: Any
+    """measured value (usually an int, float, or bool)"""
+
     uom: Optional[str]
+    """unit of measure -- use base units whereever possible"""
+
     warn: Optional["RangeOrString"]
+    """warning range"""
+
     crit: Optional["RangeOrString"]
+    """critical range"""
+
     min: Optional[float]
+    """known value minimum (None for no minimum)"""
+
     max: Optional[float]
+    """known value maximum (None for no maximum)"""
 
     # Changing these now would be API-breaking, so we'll ignore these
     # shadowed built-ins and the long list of arguments
@@ -83,10 +97,10 @@ class Performance:
 
         out: list[str] = [performance]
 
-        if self.warn is not None and self.warn != Range(""):
+        if self.warn is not None and self.warn != "" and self.warn != Range(""):
             out.append(str(self.warn))
 
-        if self.crit is not None and self.crit != Range(""):
+        if self.crit is not None and self.crit != "" and self.crit != Range(""):
             out.append(str(self.crit))
 
         if self.min is not None:
