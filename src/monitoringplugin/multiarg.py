@@ -10,7 +10,7 @@ class MultiArg(object):
         args: Union[list[str], str],
         fill: Optional[str] = None,
         splitchar: str = ",",
-    ):
+    ) -> None:
         if isinstance(args, list):
             self.args = args
         else:

@@ -11,54 +11,44 @@ their respective base unit, so `Performance('size', 10000, 'B')` is better
 than `Performance('size', 10, 'kB')`.
 """
 
-import itertools
 import re
 import typing
-from typing import Any, Literal, NamedTuple, Optional
+from typing import Any, Optional
+
+from monitoringplugin.range import Range
 
 if typing.TYPE_CHECKING:
     from .range import RangeOrString
 
 
-def zap_none(val: Any | None) -> Any | Literal[""]:
-    if val is None:
-        return ""
-    return val
-
-
 def quote(label: str) -> str:
     if re.match(r"^\w+$", label):
         return label
-    return "'%s'" % label
+    return f"'{label}'"
 
 
-class Performance(
-    NamedTuple(
-        "Performance",
-        [
-            ("label", str),
-            ("value", Any),
-            ("uom", str),
-            ("warn", "RangeOrString"),
-            ("crit", "RangeOrString"),
-            ("min", float),
-            ("max", float),
-        ],
-    )
-):
+class Performance:
+    label: str
+    value: Any
+    uom: Optional[str]
+    warn: Optional["RangeOrString"]
+    crit: Optional["RangeOrString"]
+    min: Optional[float]
+    max: Optional[float]
+
     # Changing these now would be API-breaking, so we'll ignore these
     # shadowed built-ins and the long list of arguments
     # pylint: disable-next=redefined-builtin,too-many-arguments
-    def __new__(
-        cls,
+    def __init__(
+        self,
         label: str,
         value: Any,
-        uom: str = "",
-        warn: "RangeOrString" = "",
-        crit: "RangeOrString" = "",
+        uom: Optional[str] = None,
+        warn: Optional["RangeOrString"] = None,
+        crit: Optional["RangeOrString"] = None,
         min: Optional[float] = None,
         max: Optional[float] = None,
-    ):  # noqa: F821
+    ) -> None:
         """Create new performance data object.
 
         :param label: short identifier, results in graph
@@ -72,28 +62,37 @@ class Performance(
         """
         if "'" in label or "=" in label:
             raise RuntimeError("label contains illegal characters", label)
-        return super(Performance, cls).__new__(
-            cls,
-            label,
-            value,
-            zap_none(uom),
-            zap_none(warn),
-            zap_none(crit),
-            zap_none(min),
-            zap_none(max),
-        )
+        self.label = label
+        self.value = value
+        self.uom = uom
+        self.warn = warn
+        self.crit = crit
+        self.min = min
+        self.max = max
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation conforming to the plugin API.
 
         Labels containing spaces or special characters will be quoted.
         """
-        out = [
-            "%s=%s%s" % (quote(self.label), self.value, self.uom),
-            str(self.warn),
-            str(self.crit),
-            str(self.min),
-            str(self.max),
-        ]
-        out = reversed(list(itertools.dropwhile(lambda x: x == "", reversed(out))))
+
+        performance: str = f"{quote(self.label)}={self.value}"
+
+        if self.uom is not None:
+            performance += self.uom
+
+        out: list[str] = [performance]
+
+        if self.warn is not None and self.warn != Range(""):
+            out.append(str(self.warn))
+
+        if self.crit is not None and self.crit != Range(""):
+            out.append(str(self.crit))
+
+        if self.min is not None:
+            out.append(str(self.min))
+
+        if self.max is not None:
+            out.append(str(self.max))
+
         return ";".join(out)
