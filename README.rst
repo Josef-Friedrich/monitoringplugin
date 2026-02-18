@@ -1,10 +1,10 @@
-The monitoringplugin library
+The mplugin library
 ============================
 
 About
 -----
 
-**monitoringplugin** is a Python class library which helps writing Nagios (or Icinga)
+**mplugin** is a Python class library which helps writing Nagios (or Icinga)
 compatible plugins easily in Python. It cares for much of the boilerplate code
 and default logic commonly found in Nagios checks, including:
 
@@ -19,21 +19,21 @@ and default logic commonly found in Nagios checks, including:
 - Resume log file processing at the point where the last run left
 - No dependencies beyond the Python standard library (except for Python 2.6).
 
-**monitoringplugin** runs on POSIX and Windows systems. It is compatible with
+**mplugin** runs on POSIX and Windows systems. It is compatible with
 and Python 3.9 and later.
 
 Feedback and Suggestions
 ------------------------
 
-monitoringplugin is currently maintained by Josef Friedrich <josef@friedrich.rocks>.  A
+mplugin is currently maintained by Josef Friedrich <josef@friedrich.rocks>.  A
 public issue tracker can be found at
-<https://github.com/Josef-Friedrich/monitoringplugin/issues> for bugs, suggestions, and
+<https://github.com/Josef-Friedrich/mplugin/issues> for bugs, suggestions, and
 patches.
 
 License
 -------
 
-The monitoringplugin package is released under the Zope Public License 2.1 (ZPL), a
+The mplugin package is released under the Zope Public License 2.1 (ZPL), a
 BSD-style Open Source license.
 
 
@@ -41,16 +41,16 @@ Documentation
 -------------
 
 Comprehensive documentation is `available online`_. The examples mentioned in
-the `tutorials`_ can also be found in the `monitoringplugin/examples` directory of
+the `tutorials`_ can also be found in the `mplugin/examples` directory of
 the source distribution.
 
-.. _available online: https://monitoringplugin.readthedocs.io/
-.. _tutorials: https://monitoringplugin.readthedocs.io/en/stable/tutorial/
+.. _available online: https://mplugin.readthedocs.io/
+.. _tutorials: https://mplugin.readthedocs.io/en/stable/tutorial/
 
 Acknowledgements
 ----------------
 
-monitoringplugin was originally written and maintained by Christian Kauhaus
+mplugin was originally written and maintained by Christian Kauhaus
 <kc@flyingcircus.io>.  Additional contributions from the community are
 acknowledged in the file CONTRIBUTORS.txt
 

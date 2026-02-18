@@ -2,11 +2,11 @@ import time
 
 import pytest
 
-import monitoringplugin
-from monitoringplugin.platform import with_timeout
+import mplugin
+from mplugin.platform import with_timeout
 
 
 class TestPlatform:
     def test_timeout(self):
-        with pytest.raises(monitoringplugin.Timeout):
+        with pytest.raises(mplugin.Timeout):
             with_timeout(1, time.sleep, 2)

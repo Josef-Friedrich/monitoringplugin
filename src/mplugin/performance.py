@@ -2,7 +2,7 @@ import re
 import typing
 from typing import Any, Optional
 
-from monitoringplugin.range import Range
+from mplugin.range import Range
 
 if typing.TYPE_CHECKING:
     from .range import RangeOrString
@@ -21,7 +21,7 @@ class Performance:
     :term:`Performance data` are created during metric evaluation in a context
     and are written into the *perfdata* section of the plugin's output.
     :class:`Performance` allows the creation of value objects that are passed
-    between other monitoringplugin objects.
+    between other mplugin objects.
 
     For sake of consistency, performance data should represent their values in
     their respective base unit, so `Performance('size', 10000, 'B')` is better

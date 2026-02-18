@@ -1,7 +1,7 @@
 """Structured representation for data points.
 
 This module contains the :class:`Metric` class whose instances are
-passed as value objects between most of monitoringplugin's core classes.
+passed as value objects between most of mplugin's core classes.
 Typically, :class:`~.resource.Resource` objects emit a list of metrics
 as result of their :meth:`~.resource.Resource.probe` methods.
 """
@@ -12,10 +12,10 @@ from typing import Any, Optional, TypedDict
 
 from typing_extensions import Self, Unpack
 
-from monitoringplugin.performance import Performance
+from mplugin.performance import Performance
 
 if typing.TYPE_CHECKING:
-    from monitoringplugin.result import Result
+    from mplugin.result import Result
 
     from .context import Context
     from .resource import Resource
@@ -75,10 +75,10 @@ class Metric:
         :param context: name of the associated context (defaults to the
             metric's name if left out)
         :param contextobj: reference to the associated context object
-            (set automatically by :class:`~monitoringplugin.check.Check`)
+            (set automatically by :class:`~mplugin.check.Check`)
         :param resource: reference to the originating
-            :class:`~monitoringplugin.resource.Resource` (set automatically
-            by :class:`~monitoringplugin.check.Check`)
+            :class:`~mplugin.resource.Resource` (set automatically
+            by :class:`~mplugin.check.Check`)
         """
         self.name = name
         self.value = value
@@ -137,7 +137,7 @@ class Metric:
     def evaluate(self) -> "Result":
         """Evaluates this instance according to the context.
 
-        :return: :class:`~monitoringplugin.result.Result` object
+        :return: :class:`~mplugin.result.Result` object
         :raise RuntimeError: if no context has been associated yet
         """
         if not self.contextobj:
@@ -149,7 +149,7 @@ class Metric:
     def performance(self) -> Optional[Performance]:
         """Generates performance data according to the context.
 
-        :return: :class:`~monitoringplugin.performance.Performance` object
+        :return: :class:`~mplugin.performance.Performance` object
         :raise RuntimeError: if no context has been associated yet
         """
         if not self.contextobj:

@@ -58,10 +58,10 @@ class Check(object):
         """Adds domain objects to a check.
 
         :param objects: one or more objects that are descendants from
-            :class:`~monitoringplugin.resource.Resource`,
-            :class:`~monitoringplugin.context.Context`,
-            :class:`~monitoringplugin.summary.Summary`, or
-            :class:`~monitoringplugin.result.Results`.
+            :class:`~mplugin.resource.Resource`,
+            :class:`~mplugin.context.Context`,
+            :class:`~mplugin.summary.Summary`, or
+            :class:`~mplugin.result.Results`.
         """
         for obj in objects:
             if isinstance(obj, Resource):
@@ -123,7 +123,7 @@ class Check(object):
     def main(self, verbose: Any = None, timeout: Any = None) -> NoReturn:
         """All-in-one control delegation to the runtime environment.
 
-        Get a :class:`~monitoringplugin.runtime.Runtime` instance and
+        Get a :class:`~mplugin.runtime.Runtime` instance and
         perform all phases: run the check (via :meth:`__call__`), print
         results and exit the program with an appropriate status code.
 
@@ -139,7 +139,7 @@ class Check(object):
         """Overall check state.
 
         The most significant (=worst) state seen in :attr:`results` to
-        far. :obj:`~monitoringplugin.state.Unknown` if no results have been
+        far. :obj:`~mplugin.state.Unknown` if no results have been
         collected yet. Corresponds with :attr:`exitcode`. Read-only
         property.
         """
@@ -169,7 +169,7 @@ class Check(object):
         """Additional lines of output.
 
         Long text output if check runs in verbose mode. Also queried
-        from :class:`~monitoringplugin.summary.Summary`. Read-only property.
+        from :class:`~mplugin.summary.Summary`. Read-only property.
         """
         return self.summary.verbose(self.results) or ""
 

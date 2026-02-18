@@ -3,7 +3,7 @@
 import os
 
 platform = __import__(
-    "monitoringplugin.platform.{0}".format(os.name),
+    "mplugin.platform.{0}".format(os.name),
     fromlist=["with_timeout", "flock_exclusive"],
 )
 

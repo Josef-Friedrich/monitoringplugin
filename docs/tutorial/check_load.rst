@@ -1,6 +1,6 @@
 .. _tut2:
 
-.. currentmodule:: monitoringplugin
+.. currentmodule:: mplugin
 
 Tutorial #2: check_load
 =======================
@@ -17,10 +17,10 @@ thresholds.
 Data acquisition
 ----------------
 
-First, we will subclass :class:`~monitoringplugin.resource.Resource` to generate metrics for the 1,
+First, we will subclass :class:`~mplugin.resource.Resource` to generate metrics for the 1,
 5, and 15 minute load averages.
 
-.. literalinclude:: /../src/monitoringplugin/examples/check_load.py
+.. literalinclude:: /../src/mplugin/examples/check_load.py
    :start-after: # data acquisition
    :end-before: # data presentation
 
@@ -30,7 +30,7 @@ be takes as read from the kernel or normalized by cpu. Accordingly, the
 
 In the :meth:`Load.probe` method the check reads the load averages from the
 :file:`/proc` filesystem and extracts the interesting values. For each value, a
-:class:`~monitoringplugin.metric.Metric` object is returned. Each metric has a generated name
+:class:`~mplugin.metric.Metric` object is returned. Each metric has a generated name
 ("load1", "load5", "load15") and a value. We don't declare a unit of measure
 since load averages come without unit. All metrics will share the same context
 "load" which means that the thresholds for all three values will be the same.
@@ -51,12 +51,12 @@ Evaluation
 The :program:`check_load` plugin should accept warning and critical ranges and
 determine if any load value is outside these ranges. Since this kind of logic is
 pretty standard for most of all Nagios/Icinga plugins,
-:mod:`monitoringplugin` provides a generalized context class for it. It is
-the :class:`~monitoringplugin.context.ScalarContext` class which accepts a warning
+:mod:`mplugin` provides a generalized context class for it. It is
+the :class:`~mplugin.context.ScalarContext` class which accepts a warning
 and a critical range as well as a template to present metric values in a
 human-readable way.
 
-When :class:`~monitoringplugin.context.ScalarContext` is sufficient, it may be
+When :class:`~mplugin.context.ScalarContext` is sufficient, it may be
 configured during instantiation right in the `main` function. A first
 version of the `main` function looks like this:
 
@@ -70,9 +70,9 @@ version of the `main` function looks like this:
                          help='return critical if load is outside RANGE')
        argp.add_argument('-r', '--percpu', action='store_true', default=False)
        args = argp.parse_args()
-       check = monitoringplugin.Check(
+       check = mplugin.Check(
            Load(args.percpu),
-           monitoringplugin.ScalarContext('load', args.warning, args.critical))
+           mplugin.ScalarContext('load', args.warning, args.critical))
        check.main()
 
 Note that the context name "load" is referenced by all three metrics returned by
@@ -115,20 +115,20 @@ We want the first line to display:
 * which load value violates a threshold, if applicable
 * which threshold is being violated, if applicable.
 
-The last two points are already covered by the :class:`~monitoringplugin.result.Result` default
+The last two points are already covered by the :class:`~mplugin.result.Result` default
 implementation, but we need to tweak the summary to display a load overview
 as stated in the first point:
 
-.. literalinclude:: /../src/monitoringplugin/examples/check_load.py
+.. literalinclude:: /../src/mplugin/examples/check_load.py
    :start-after: # data presentation
    :end-before: # runtime environment and data evaluation
 
-The :class:`~monitoringplugin.summary.Summary` class has three methods which can be
-specialized: :meth:`~monitoringplugin.summary.Summary.ok` to return a status line
-when there are no problems, :meth:`~monitoringplugin.summary.Summary.problem` to
+The :class:`~mplugin.summary.Summary` class has three methods which can be
+specialized: :meth:`~mplugin.summary.Summary.ok` to return a status line
+when there are no problems, :meth:`~mplugin.summary.Summary.problem` to
 return a status line when the overall check status indicates problems, and
-:meth:`~monitoringplugin.summary.Summary.verbose` to generate additional output. All
-three methods get a set of :class:`~monitoringplugin.result.Result` objects passed
+:meth:`~mplugin.summary.Summary.verbose` to generate additional output. All
+three methods get a set of :class:`~mplugin.result.Result` objects passed
 in. In our code, the `ok` method queries uses the original metrics referenced by
 the result objects to build an overview like "loadavg is 0.19, 0.16, 0.14".
 
@@ -137,32 +137,32 @@ Check setup
 
 The last step in this tutorial is to put the pieces together:
 
-.. literalinclude:: /../src/monitoringplugin/examples/check_load.py
+.. literalinclude:: /../src/mplugin/examples/check_load.py
    :start-after: # runtime environment and data evaluation
 
 In the :py:func:`main` function we parse the command line parameters using the
 standard :class:`argparse.ArgumentParser` class. Watch the
-:class:`~monitoringplugin.check.Check` object creation: its constructor can be fed
-with a variable number of :class:`~monitoringplugin.resource.Resource`,
-:class:`~monitoringplugin.context.Context`, and
-:class:`~monitoringplugin.summary.Summary` objects. In this tutorial, instances of
+:class:`~mplugin.check.Check` object creation: its constructor can be fed
+with a variable number of :class:`~mplugin.resource.Resource`,
+:class:`~mplugin.context.Context`, and
+:class:`~mplugin.summary.Summary` objects. In this tutorial, instances of
 our specialized `Load` and `LoadSummary` classes go in.
 
-We did not specialize a :class:`~monitoringplugin.context.Context` class to evaluate
+We did not specialize a :class:`~mplugin.context.Context` class to evaluate
 the load metrics. Instead, we use the supplied
-:class:`~monitoringplugin.context.ScalarContext` which compares a scalar value
+:class:`~mplugin.context.ScalarContext` which compares a scalar value
 against two ranges according to the range syntax defined by the Nagios plugin
-API. The default :class:`~monitoringplugin.context.ScalarContext`
+API. The default :class:`~mplugin.context.ScalarContext`
 implementation covers the majority of evaluation needs. Checks using non-scalar
 metrics or requiring special logic should subclass
-:class:`~monitoringplugin.context.Context` to fit their needs.
+:class:`~mplugin.context.Context` to fit their needs.
 
-The check's :meth:`~monitoringplugin.check.Check.main` method runs the check, prints
+The check's :meth:`~mplugin.check.Check.main` method runs the check, prints
 the check's output including summary, log messages and :term:`performance data`
 to *stdout* and exits the plugin with the appropriate exit code.
 
-Note the :func:`~monitoringplugin.runtime.guarded` decorator in front of the main
-function. It helps the code part outside :class:`~monitoringplugin.check.Check` to
+Note the :func:`~mplugin.runtime.guarded` decorator in front of the main
+function. It helps the code part outside :class:`~mplugin.check.Check` to
 behave: in case of uncaught exceptions, it ensures that the exit code is **3**
 (unknown) and that the exception string is properly formatted. Additionally,
 logging is set up at an early stage so that even messages logged from

@@ -1,4 +1,4 @@
-"""Exceptions with special meanings for monitoringplugin."""
+"""Exceptions with special meanings for mplugin."""
 
 
 class CheckError(RuntimeError):
@@ -16,7 +16,7 @@ class CheckError(RuntimeError):
 class Timeout(RuntimeError):
     """Maximum check run time exceeded.
 
-    This exception is raised internally by monitoringplugin if the check's
+    This exception is raised internally by mplugin if the check's
     run time takes longer than allowed. Check execution is aborted and
     the plugin exits with an UNKNOWN (3) status.
     """

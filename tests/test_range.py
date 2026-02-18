@@ -1,6 +1,6 @@
 import pytest
 
-from monitoringplugin.range import Range
+from mplugin.range import Range
 
 
 class TestRangeParse:

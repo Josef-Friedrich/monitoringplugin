@@ -21,10 +21,10 @@ import re
 
 import numpy
 
-import monitoringplugin
+import mplugin
 
 
-class HAProxyLog(monitoringplugin.Resource):
+class HAProxyLog(mplugin.Resource):
     """haproxy.log parser.
 
     Goes through a haproxy log file and extracts total request time
@@ -43,8 +43,8 @@ class HAProxyLog(monitoringplugin.Resource):
 
     def parse_log(self):
         """Yields ttot and error status for each log line."""
-        cookie = monitoringplugin.Cookie(self.statefile)
-        with monitoringplugin.LogTail(self.logfile, cookie) as logfile:
+        cookie = mplugin.Cookie(self.statefile)
+        with mplugin.LogTail(self.logfile, cookie) as logfile:
             for line in logfile:
                 match = self.r_logline.search(line.decode())
                 if not match:
@@ -63,7 +63,7 @@ class HAProxyLog(monitoringplugin.Resource):
         if requests:
             for pct in self.percentiles:
                 metrics.append(
-                    monitoringplugin.Metric(
+                    mplugin.Metric(
                         "ttot%s" % pct,
                         numpy.percentile(data["ttot"], int(pct)) / 1000.0,
                         "s",
@@ -72,10 +72,8 @@ class HAProxyLog(monitoringplugin.Resource):
                 )
         error_rate = 100 * numpy.sum(data["err"] / requests) if requests else 0
         metrics += [
-            monitoringplugin.Metric("error_rate", error_rate, "%", 0, 100),
-            monitoringplugin.Metric(
-                "request_total", requests, min=0, context="default"
-            ),
+            mplugin.Metric("error_rate", error_rate, "%", 0, 100),
+            mplugin.Metric("request_total", requests, min=0, context="default"),
         ]
         return metrics
 
@@ -89,14 +87,14 @@ def parse_args():
         "--tw",
         "--ttot-warning",
         metavar="RANGE[,RANGE,...]",
-        type=monitoringplugin.MultiArg,
+        type=mplugin.MultiArg,
         default="",
     )
     argp.add_argument(
         "--tc",
         "--ttot-critical",
         metavar="RANGE[,RANGE,...]",
-        type=monitoringplugin.MultiArg,
+        type=mplugin.MultiArg,
         default="",
     )
     argp.add_argument(
@@ -125,17 +123,17 @@ def parse_args():
     return argp.parse_args()
 
 
-@monitoringplugin.guarded
+@mplugin.guarded
 def main():
     args = parse_args()
     percentiles = args.percentiles.split(",")
-    check = monitoringplugin.Check(
+    check = mplugin.Check(
         HAProxyLog(args.logfile, args.state_file, percentiles),
-        monitoringplugin.ScalarContext("error_rate", args.ew, args.ec),
+        mplugin.ScalarContext("error_rate", args.ew, args.ec),
     )
     for pct, i in zip(percentiles, itertools.count()):
         check.add(
-            monitoringplugin.ScalarContext(
+            mplugin.ScalarContext(
                 "ttot%s" % pct,
                 args.tw[i],
                 args.tc[i],

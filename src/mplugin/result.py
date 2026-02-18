@@ -13,7 +13,7 @@ import collections
 import typing
 from typing import Optional, Union
 
-from monitoringplugin.state import ServiceState
+from mplugin.state import ServiceState
 
 if typing.TYPE_CHECKING:
     from .context import Context
@@ -26,9 +26,9 @@ class Result:
     """Evaluation outcome consisting of state and explanation.
 
     A Result object is typically emitted by a
-    :class:`~monitoringplugin.context.Context` object and represents the
+    :class:`~mplugin.context.Context` object and represents the
     outcome of an evaluation. It contains a
-    :class:`~monitoringplugin.state.ServiceState` as well as an explanation.
+    :class:`~mplugin.state.ServiceState` as well as an explanation.
     Plugin authors may subclass Result to implement specific features.
     """
 
@@ -181,7 +181,7 @@ class Results:
     def most_significant_state(self) -> "ServiceState":
         """The "worst" state found in all results.
 
-        :returns: :obj:`~monitoringplugin.state.ServiceState` object
+        :returns: :obj:`~mplugin.state.ServiceState` object
         :raises ValueError: if no results are present
         """
         return max(self.by_state.keys())

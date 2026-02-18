@@ -2,9 +2,9 @@
 API docs
 ********
 
-.. module:: monitoringplugin
+.. module:: mplugin
 
-The :mod:`monitoringplugin` module consists of several submodules which are
+The :mod:`mplugin` module consists of several submodules which are
 discussed in detail as follows. Refer to the ":ref:`tutorials`" section for an
 introduction on how to use them for typical plugins.
 

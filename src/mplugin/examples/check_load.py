@@ -5,15 +5,15 @@ import argparse
 import logging
 import subprocess
 
-import monitoringplugin
+import mplugin
 
-_log = logging.getLogger("monitoringplugin")
+_log = logging.getLogger("mplugin")
 
 
 # data acquisition
 
 
-class Load(monitoringplugin.Resource):
+class Load(mplugin.Resource):
     """Domain model: system load.
 
     Determines the system load parameters and (optionally) cpu count.
@@ -41,15 +41,13 @@ class Load(monitoringplugin.Resource):
         cpus = self.cpus() if self.percpu else 1
         load = [float(load_value) / cpus for load_value in load]
         for i, period in enumerate([1, 5, 15]):
-            yield monitoringplugin.Metric(
-                "load%d" % period, load[i], min=0, context="load"
-            )
+            yield mplugin.Metric("load%d" % period, load[i], min=0, context="load")
 
 
 # data presentation
 
 
-class LoadSummary(monitoringplugin.Summary):
+class LoadSummary(mplugin.Summary):
     """Status line conveying load information.
 
     We specialize the `ok` method to present all three figures in one
@@ -71,7 +69,7 @@ class LoadSummary(monitoringplugin.Summary):
 # runtime environment and data evaluation
 
 
-@monitoringplugin.guarded
+@mplugin.guarded
 def main():
     argp = argparse.ArgumentParser(description=__doc__)
     argp.add_argument(
@@ -97,9 +95,9 @@ def main():
         help="increase output verbosity (use up to 3 times)",
     )
     args = argp.parse_args()
-    check = monitoringplugin.Check(
+    check = mplugin.Check(
         Load(args.percpu),
-        monitoringplugin.ScalarContext("load", args.warning, args.critical),
+        mplugin.ScalarContext("load", args.warning, args.critical),
         LoadSummary(args.percpu),
     )
     check.main(verbose=args.verbose)

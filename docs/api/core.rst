@@ -5,29 +5,29 @@ Core API
 
 The core API consists of all functions and classes which are called in
 a plugin's `main` function. A typical main function is decorated with
-:func:`~monitoringplugin.runtime.guarded` and creates a
-:class:`~monitoringplugin.check.Check` object. The check instance is fed with
-instances of :class:`~monitoringplugin.resource.Resource`,
-:class:`~monitoringplugin.context.Context`, or
-:class:`~monitoringplugin.summary.Summary` (respective custom subclasses). Finally,
-control is passed to the check's :meth:`~monitoringplugin.check.Check.main` method.
+:func:`~mplugin.runtime.guarded` and creates a
+:class:`~mplugin.check.Check` object. The check instance is fed with
+instances of :class:`~mplugin.resource.Resource`,
+:class:`~mplugin.context.Context`, or
+:class:`~mplugin.summary.Summary` (respective custom subclasses). Finally,
+control is passed to the check's :meth:`~mplugin.check.Check.main` method.
 
 .. note::
 
    All classes that plugin authors typically need are imported into the
-   :mod:`monitoringplugin` name space. For example, use ::
+   :mod:`mplugin` name space. For example, use ::
 
-      import monitoringplugin
+      import mplugin
       # ...
-      check = monitoringplugin.Check()
+      check = mplugin.Check()
 
-   to get a :class:`~monitoringplugin.check.Check` instance.
+   to get a :class:`~mplugin.check.Check` instance.
 
 
-monitoringplugin.check
+mplugin.check
 ----------------------
 
-.. automodule:: monitoringplugin.check
+.. automodule:: mplugin.check
    :no-members:
 
 .. autoclass:: Check
@@ -45,8 +45,8 @@ monitoringplugin.check
 
    .. attribute:: results
 
-      :class:`~monitoringplugin.result.Results` container that allows accessing the
-      :class:`~monitoringplugin.result.Result` objects generated during the
+      :class:`~mplugin.result.Results` container that allows accessing the
+      :class:`~mplugin.result.Result` objects generated during the
       evaluation.
 
 .. topic:: Example: Skeleton main function
@@ -55,25 +55,25 @@ monitoringplugin.check
    the main function of a plugin::
 
       def main():
-         check = monitoringplugin.Check(MyResource1(...), MyResource2(...),
+         check = mplugin.Check(MyResource1(...), MyResource2(...),
                                     MyContext1(...), MyContext2(...),
                                     MySummary(...))
          check.main()
 
 
-monitoringplugin.resource
+mplugin.resource
 -------------------------
 
-.. automodule:: monitoringplugin.resource
+.. automodule:: mplugin.resource
    :no-members:
 
 .. autoclass:: Resource
 
 
-monitoringplugin.context
+mplugin.context
 ------------------------
 
-.. automodule:: monitoringplugin.context
+.. automodule:: mplugin.context
    :no-members:
 
 .. autoclass:: Context
@@ -88,19 +88,19 @@ monitoringplugin.context
       c = Check(..., ScalarContext('metric', args.warning, args.critical), ...)
 
 
-monitoringplugin.summary
+mplugin.summary
 ------------------------
 
-.. automodule:: monitoringplugin.summary
+.. automodule:: mplugin.summary
    :no-members:
 
 .. autoclass:: Summary
 
 
-monitoringplugin.runtime
+mplugin.runtime
 ------------------------
 
-.. automodule:: monitoringplugin.runtime
+.. automodule:: mplugin.runtime
    :no-members:
 
 .. autofunction:: guarded(*args, verbose=None)

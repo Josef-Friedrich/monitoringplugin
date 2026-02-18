@@ -62,4 +62,4 @@ lint:
 
 # Perform type checking using mypy
 type_check:
-	uv run mypy src/monitoringplugin tests
+	uv run mypy src/mplugin tests

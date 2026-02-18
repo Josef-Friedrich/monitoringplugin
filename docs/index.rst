@@ -1,8 +1,8 @@
 ##############################
-monitoringplugin Documentation
+mplugin Documentation
 ##############################
 
-This documentation covers monitoringplugin |version|.
+This documentation covers mplugin |version|.
 
 Contents
 ========
@@ -26,7 +26,7 @@ Indices and tables
 
 To download the package, see the `PyPI page`_.
 
-.. _PyPI page: https://pypi.python.org/pypi/monitoringplugin
+.. _PyPI page: https://pypi.python.org/pypi/mplugin
 
 .. general:
    http://www.packtpub.com/article/documenting-your-python-project-1

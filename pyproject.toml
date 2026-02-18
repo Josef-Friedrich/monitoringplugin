@@ -1,6 +1,6 @@
 
 [project]
-name = "monitoringplugin"
+name = "mplugin"
 version = "2.0.0a0"
 description = "Class library for writing Nagios (Icinga) plugins"
 authors = [
@@ -46,8 +46,8 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://monitoringplugin.readthedocs.io/"
-Download = "https://pypi.org/project/monitoringplugin/"
-Source = "https://github.com/Josef-Friedrich/monitoringplugin"
-Issues = "https://github.com/Josef-Friedrich/monitoringplugin/issues"
-Changelog = "https://github.com/Josef-Friedrich/monitoringplugin/blob/main/HISTORY.txt"
+Documentation = "https://mplugin.readthedocs.io/"
+Download = "https://pypi.org/project/mplugin/"
+Source = "https://github.com/Josef-Friedrich/mplugin"
+Issues = "https://github.com/Josef-Friedrich/mplugin/issues"
+Changelog = "https://github.com/Josef-Friedrich/mplugin/blob/main/HISTORY.txt"

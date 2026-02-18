@@ -1,16 +1,16 @@
 .. _tutorials:
 
 *********************************
-First steps with monitoringplugin
+First steps with mplugin
 *********************************
 
 This tutorial will guide you through all important steps of writing a check with
-the :py:mod:`monitoringplugin` class library. Read this to get started.
+the :py:mod:`mplugin` class library. Read this to get started.
 
 Key concepts
 ============
 
-:py:mod:`monitoringplugin` has a fine-grained class model with clear separation of
+:py:mod:`mplugin` has a fine-grained class model with clear separation of
 concerns. This allows plugin writers to focus on one
 particular tasks at a time while writing plugins. Nagios/Icinga plugins need to
 perform three steps: data :term:`acquisition`, :term:`evaluation`, and
@@ -83,11 +83,11 @@ Summary
    *Example: LOAD WARNING - load1 is 0.75 (greater than 0.5)*
 
 The following tutorials which will guide you through the most important
-features of :mod:`monitoringplugin`.
+features of :mod:`mplugin`.
 
 .. hint::
 
-   Study the source code in the :file:`monitoringplugin/examples` directory for
+   Study the source code in the :file:`mplugin/examples` directory for
    complete examples.
 
 

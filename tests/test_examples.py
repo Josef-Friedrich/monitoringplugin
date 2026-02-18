@@ -20,9 +20,9 @@ class TestExamples:
 
     def _run_example(self, program, regexp):
         if USING_IMPORTLIB:
-            program_path = resource_files("monitoringplugin.examples") / program
+            program_path = resource_files("mplugin.examples") / program
         else:
-            program_path = resource_files("monitoringplugin.examples", program)
+            program_path = resource_files("mplugin.examples", program)
         proc = subprocess.Popen(
             [sys.executable, program_path, "-v"],
             stdout=subprocess.PIPE,

@@ -1,7 +1,7 @@
 import pytest
 
-import monitoringplugin
-from monitoringplugin.metric import Metric
+import mplugin
+from mplugin.metric import Metric
 
 
 class TestMetric:
@@ -9,7 +9,7 @@ class TestMetric:
         assert (
             "time is 1s"
             == Metric(
-                "time", 1, "s", contextobj=monitoringplugin.ScalarContext("ctx")
+                "time", 1, "s", contextobj=mplugin.ScalarContext("ctx")
             ).description
         )
 

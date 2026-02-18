@@ -3,8 +3,8 @@ from io import StringIO
 
 import pytest
 
-import monitoringplugin
-from monitoringplugin.runtime import Runtime, guarded
+import mplugin
+from mplugin.runtime import Runtime, guarded
 
 
 def make_check():
@@ -12,7 +12,7 @@ def make_check():
         summary_str = "summary"
         verbose_str = "long output"
         name = "check"
-        state = monitoringplugin.ok
+        state = mplugin.ok
         exitcode = 0
         perfdata = None
 
@@ -88,7 +88,7 @@ class RuntimeExceptionTest(TestRuntimeBase):
         assert "Traceback" in self.r.stdout.getvalue()
 
     def test_handle_timeout_exception(self):
-        self.run_main_with_exception(monitoringplugin.Timeout("1s"))
+        self.run_main_with_exception(mplugin.Timeout("1s"))
         assert (
             "UNKNOWN: Timeout: check execution aborted after 1s"
             in self.r.stdout.getvalue()

@@ -1,4 +1,4 @@
-from monitoringplugin.state import critical, ok, unknown, warn, worst
+from mplugin.state import critical, ok, unknown, warn, worst
 
 
 class TestState:

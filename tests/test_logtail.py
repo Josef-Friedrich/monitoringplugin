@@ -2,15 +2,15 @@ import tempfile
 
 import pytest
 
-import monitoringplugin
-from monitoringplugin.logtail import LogTail
+import mplugin
+from mplugin.logtail import LogTail
 
 
 class TestLogTail:
     def setup_method(self):
         self.lf = tempfile.NamedTemporaryFile(prefix="log.")
         self.cf = tempfile.NamedTemporaryFile(prefix="cookie.")
-        self.cookie = monitoringplugin.Cookie(self.cf.name)
+        self.cookie = mplugin.Cookie(self.cf.name)
 
     def teardown_method(self):
         self.cf.close()

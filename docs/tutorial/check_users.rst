@@ -1,6 +1,6 @@
 .. _tut3:
 
-.. currentmodule:: monitoringplugin
+.. currentmodule:: mplugin
 
 Tutorial #3: check_users
 ========================
@@ -21,7 +21,7 @@ A Resource implementation could look like this:
 
 .. code-block:: python
 
-   class Users(monitoringplugin.Resource):
+   class Users(mplugin.Resource):
 
        def __init__(self):
            self.users = []
@@ -36,9 +36,9 @@ A Resource implementation could look like this:
            """Return both total and unique user count."""
            self.users = self.list_users()
            self.unique_users = set(self.users)
-           return [monitoringplugin.Metric('total', len(self.users), min=0,
+           return [mplugin.Metric('total', len(self.users), min=0,
                                        context='users'),
-                   monitoringplugin.Metric('unique', len(self.unique_users), min=0,
+                   mplugin.Metric('unique', len(self.unique_users), min=0,
                                        context='users')]
 
 The `probe()` method returns a list containing two metric objects.
@@ -51,30 +51,30 @@ metrics:
        """Return both total and unique user count."""
        self.users = self.list_users()
        self.unique_users = set(self.users)
-       yield monitoringplugin.Metric('total', len(self.users), min=0,
+       yield mplugin.Metric('total', len(self.users), min=0,
                                  context='users')
-       yield monitoringplugin.Metric('unique', len(self.unique_users), min=0,
+       yield mplugin.Metric('unique', len(self.unique_users), min=0,
                                  context='users')]
 
 This may be more comfortable than constructing a list of metrics first and
 returning them all at once.
 
-To assign a :class:`~monitoringplugin.context.Context` to a
-:class:`~monitoringplugin.metric.Metric`, pass the context's name in the metric's
+To assign a :class:`~mplugin.context.Context` to a
+:class:`~mplugin.metric.Metric`, pass the context's name in the metric's
 **context** parameter. Both metrics use the same context "users". This way, the
 main function must define only one context that applies the same thresholds to
 both metrics:
 
 .. code-block:: python
 
-   @monitoringplugin.guarded
+   @mplugin.guarded
    def main():
        argp = argparse.ArgumentParser()
        [...]
        args = argp.parse_args()
-       check = monitoringplugin.Check(
+       check = mplugin.Check(
            Users(),
-           monitoringplugin.ScalarContext('users', args.warning, args.critical,
+           mplugin.ScalarContext('users', args.warning, args.critical,
                                       fmt_metric='{value} users logged in'))
        check.main()
 
@@ -91,22 +91,22 @@ parameters:
 
    def probe(self):
        [...]
-       return [monitoringplugin.Metric('total', len(self.users), min=0),
-               monitoringplugin.Metric('unique', len(self.unique_users), min=0)]
+       return [mplugin.Metric('total', len(self.users), min=0),
+               mplugin.Metric('unique', len(self.unique_users), min=0)]
 
 We then define two contexts (one for each metric) in the `main()` function:
 
 .. code-block:: python
 
-   @monitoringplugin.guarded
+   @mplugin.guarded
    def main():
        [...]
        args = argp.parse_args()
-       check = monitoringplugin.Check(
+       check = mplugin.Check(
            Users(),
-           monitoringplugin.ScalarContext('total', args.warning, args.critical,
+           mplugin.ScalarContext('total', args.warning, args.critical,
                                       fmt_metric='{value} users logged in'),
-           monitoringplugin.ScalarContext(
+           mplugin.ScalarContext(
                'unique', args.warning_unique, args.critical_unique,
                fmt_metric='{value} unique users logged in'))
        check.main(args.verbose, args.timeout)
@@ -117,36 +117,36 @@ Alternatively, we can require every context that fits in metric definitions.
 Logging and verbosity levels
 ----------------------------
 
-**monitoringplugin** integrates with the `logging`_ module from Python's standard
+**mplugin** integrates with the `logging`_ module from Python's standard
 library. If the main function is decorated with `guarded` (which is heavily
 recommended), the logging module gets automatically configured before the
-execution of the `main()` function starts. Messages logged to the *monitoringplugin*
-logger (or any sublogger) are processed with monitoringplugin's integrated logging.
+execution of the `main()` function starts. Messages logged to the *mplugin*
+logger (or any sublogger) are processed with mplugin's integrated logging.
 
 Consider the following example check::
 
    import argparse
-   import monitoringplugin
+   import mplugin
    import logging
 
-   _log = logging.getLogger('monitoringplugin')
+   _log = logging.getLogger('mplugin')
 
 
-   class Logging(monitoringplugin.Resource):
+   class Logging(mplugin.Resource):
 
        def probe(self):
            _log.warning('warning message')
            _log.info('info message')
            _log.debug('debug message')
-           return [monitoringplugin.Metric('zero', 0, context='default')]
+           return [mplugin.Metric('zero', 0, context='default')]
 
 
-   @monitoringplugin.guarded
+   @mplugin.guarded
    def main():
        argp = argparse.ArgumentParser()
        argp.add_argument('-v', '--verbose', action='count', default=0)
        args = argp.parse_args()
-       check = monitoringplugin.Check(Logging())
+       check = mplugin.Check(Logging())
        check.main(args.verbose)
 
    if __name__ == '__main__':
@@ -190,12 +190,12 @@ This behaviour conforms to the "Verbose output" suggestions found in the
 The initial verbosity level is 1 (multi-line output). This means that tracebacks
 are printed for uncaught exceptions raised in the initialization phase (before
 :meth:`Check.main` is called). This is generally a good thing. To suppress
-tracebacks during initialization, call :func:`~monitoringplugin.runtime.guarded`
+tracebacks during initialization, call :func:`~mplugin.runtime.guarded`
 with an optional `verbose` parameter. Example:
 
 .. code-block:: python
 
-   @monitoringplugin.guarded(verbose=0)
+   @mplugin.guarded(verbose=0)
    def main():
       [...]
 
@@ -211,7 +211,7 @@ like this:
 
 .. code-block:: python
 
-   class Users(monitoringplugin.Resource):
+   class Users(mplugin.Resource):
 
        [...]
 
@@ -224,7 +224,7 @@ like this:
                    _log.debug('who output: %s', line.strip())
                    users.append(line.split()[0].decode())
            except OSError:
-               raise monitoringplugin.CheckError(
+               raise mplugin.CheckError(
                    'cannot determine number of users ({} failed)'.format(
                        self.who_cmd))
            _log.debug('found users: %r', users)

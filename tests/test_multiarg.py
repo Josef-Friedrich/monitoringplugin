@@ -1,4 +1,4 @@
-from monitoringplugin.multiarg import MultiArg
+from mplugin.multiarg import MultiArg
 
 
 class TestMultiarg:

@@ -5,27 +5,27 @@ Intermediate data API
 
 The following classes allow to handle intermediate data that are used during the
 plugin's execution in a structured way. Most of them are used by the
-:mod:`monitoringplugin` library itself to create objects which are passed into
+:mod:`mplugin` library itself to create objects which are passed into
 code written by plugin authors. Other classes (like
-:class:`~monitoringplugin.metric.Metric`) are used by plugin authors to generate
+:class:`~mplugin.metric.Metric`) are used by plugin authors to generate
 intermediate data during :term:`acquisition` or :term:`evaluation` steps.
 
 .. note::
 
    All classes that plugin authors typically need are imported directly into the
-   :mod:`monitoringplugin` name space. For example, use ::
+   :mod:`mplugin` name space. For example, use ::
 
-      import monitoringplugin
+      import mplugin
       # ...
-      result = monitoringplugin.Result(monitoringplugin.Ok)
+      result = mplugin.Result(mplugin.Ok)
 
-   to get a :class:`~monitoringplugin.result.Result` instance.
+   to get a :class:`~mplugin.result.Result` instance.
 
 
-monitoringplugin.metric
+mplugin.metric
 -----------------------
 
-.. automodule:: monitoringplugin.metric
+.. automodule:: mplugin.metric
    :no-members:
 
 .. autoclass:: Metric
@@ -34,10 +34,10 @@ monitoringplugin.metric
    .. automethod:: __str__
 
 
-monitoringplugin.state
+mplugin.state
 ----------------------
 
-.. automodule:: monitoringplugin.state
+.. automodule:: mplugin.state
    :no-members:
 
 .. autoclass:: ServiceState
@@ -47,10 +47,10 @@ monitoringplugin.state
 
 .. note::
 
-   :class:`ServiceState` is not imported into the :mod:`monitoringplugin`
+   :class:`ServiceState` is not imported into the :mod:`mplugin`
    top-level name space since there is usually no need to access it directly.
 
-.. autofunction:: monitoringplugin.state.worst
+.. autofunction:: mplugin.state.worst
 
 State subclasses
 ^^^^^^^^^^^^^^^^
@@ -58,21 +58,21 @@ State subclasses
 The state subclasses are singletons. Plugin authors should use the class
 name (without parentheses) to access the instance. For example::
 
-   state = monitoringplugin.Critical
+   state = mplugin.Critical
 
 
-.. autoclass:: monitoringplugin.state.Ok
-.. autoclass:: monitoringplugin.state.Warn
-.. autoclass:: monitoringplugin.state.Critical
-.. autoclass:: monitoringplugin.state.Unknown
+.. autoclass:: mplugin.state.Ok
+.. autoclass:: mplugin.state.Warn
+.. autoclass:: mplugin.state.Critical
+.. autoclass:: mplugin.state.Unknown
 
 Because these are implemented as classes, the `Warn` class cannot be named
 `Warning`, or it would occlude the Python built-in exception class.
 
-monitoringplugin.performance
+mplugin.performance
 ----------------------------
 
-.. automodule:: monitoringplugin.performance
+.. automodule:: mplugin.performance
    :no-members:
 
 .. autoclass:: Performance
@@ -81,10 +81,10 @@ monitoringplugin.performance
    .. automethod:: __str__
 
 
-monitoringplugin.range
+mplugin.range
 ----------------------
 
-.. automodule:: monitoringplugin.range
+.. automodule:: mplugin.range
    :no-members:
 
 .. autoclass:: Range
@@ -94,10 +94,10 @@ monitoringplugin.range
    .. automethod:: __repr__
 
 
-monitoringplugin.result
+mplugin.result
 -----------------------
 
-.. automodule:: monitoringplugin.result
+.. automodule:: mplugin.result
    :no-members:
 
 .. autoclass:: Result

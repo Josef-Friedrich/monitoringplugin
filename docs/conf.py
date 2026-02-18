@@ -16,8 +16,8 @@ project = "Python project boilerplate"
 copyright: str = f"2010-{datetime.now().year}, Flying Circus Internet Operations GmbH, Christian Kauhaus, Josef Friedrich"
 author = "Josef Friedrich"
 
-version: str = get_version("monitoringplugin")
-release: str = get_version("monitoringplugin")
+version: str = get_version("mplugin")
+release: str = get_version("mplugin")
 language = "en"
 
 exclude_patterns: list[str] = ["_build"]

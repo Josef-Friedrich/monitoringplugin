@@ -1,16 +1,16 @@
 import pytest
 
-import monitoringplugin
-from monitoringplugin.context import Context, Contexts, ScalarContext
+import mplugin
+from mplugin.context import Context, Contexts, ScalarContext
 
 
 class TestContext:
     def test_description_should_be_empty_by_default(self):
         c = Context("ctx")
-        assert c.describe(monitoringplugin.Metric("m", 0)) is None
+        assert c.describe(mplugin.Metric("m", 0)) is None
 
     def test_fmt_template(self):
-        m1 = monitoringplugin.Metric("foo", 1, "s", min=0)
+        m1 = mplugin.Metric("foo", 1, "s", min=0)
         c = Context("describe_template", "{name} is {valueunit} (min {min})")
         assert "foo is 1s (min 0)" == c.describe(m1)
 
@@ -18,7 +18,7 @@ class TestContext:
         def format_metric(metric, context):
             return "{0} formatted by {1}".format(metric.name, context.name)
 
-        m1 = monitoringplugin.Metric("foo", 1, "s", min=0)
+        m1 = mplugin.Metric("foo", 1, "s", min=0)
         c = Context("describe_callable", fmt_metric=format_metric)
         assert "foo formatted by describe_callable" == c.describe(m1)
 
@@ -26,21 +26,19 @@ class TestContext:
 class TestScalarContext:
     def test_state_ranges_values(self):
         test_cases = [
-            (1, monitoringplugin.ok, None),
-            (3, monitoringplugin.warn, "outside range 0:2"),
-            (5, monitoringplugin.critical, "outside range 0:4"),
+            (1, mplugin.ok, None),
+            (3, mplugin.warn, "outside range 0:2"),
+            (5, mplugin.critical, "outside range 0:4"),
         ]
         c = ScalarContext("ctx", "0:2", "0:4")
         for value, exp_state, exp_reason in test_cases:
-            m = monitoringplugin.Metric("time", value)
-            assert monitoringplugin.Result(exp_state, exp_reason, m) == c.evaluate(
-                m, None
-            )
+            m = mplugin.Metric("time", value)
+            assert mplugin.Result(exp_state, exp_reason, m) == c.evaluate(m, None)
 
     def test_accept_none_warning_critical(self):
         c = ScalarContext("ctx")
-        assert monitoringplugin.Range() == c.warning
-        assert monitoringplugin.Range() == c.critical
+        assert mplugin.Range() == c.warning
+        assert mplugin.Range() == c.critical
 
 
 class TestContexts:

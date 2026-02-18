@@ -41,7 +41,7 @@ class Summary(object):
         The default implementation returns a string representation of
         the first result.
 
-        :param results: :class:`~monitoringplugin.result.Results` container
+        :param results: :class:`~mplugin.result.Results` container
         :returns: status line
         """
         return "{0}".format(results[0])

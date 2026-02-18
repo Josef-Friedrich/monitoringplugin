@@ -3,7 +3,7 @@
 import fcntl
 import signal
 
-import monitoringplugin
+import mplugin
 
 
 # Changing the badly-named `t` variable at this point is likely API-breaking,
@@ -13,7 +13,7 @@ def with_timeout(t, func, *args, **kwargs):
     """Call `func` but terminate after `t` seconds."""
 
     def timeout_handler(signum, frame):
-        raise monitoringplugin.Timeout("{0}s".format(t))
+        raise mplugin.Timeout("{0}s".format(t))
 
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(t)

@@ -1,13 +1,13 @@
 import io
 import logging
 
-import monitoringplugin
-from monitoringplugin.output import Output
+import mplugin
+from mplugin.output import Output
 
 
 class FakeCheck:
     name = "Fake"
-    state = monitoringplugin.ok
+    state = mplugin.ok
     summary_str = "check summary"
     verbose_str = "hello world\n"
     perfdata = ["foo=1m;2;3", "bar=1s;2;3"]

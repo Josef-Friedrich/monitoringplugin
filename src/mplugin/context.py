@@ -42,13 +42,13 @@ class Context(object):
         """Creates generic context identified by `name`.
 
         Generic contexts just format associated metrics and evaluate
-        always to :obj:`~monitoringplugin.state.Ok`. Metric formatting is
+        always to :obj:`~mplugin.state.Ok`. Metric formatting is
         controlled with the :attr:`fmt_metric` attribute. It can either
         be a string or a callable. See the :meth:`describe` method for
         how formatting is done.
 
         :param name: context name that is matched by the context
-            attribute of :class:`~monitoringplugin.metric.Metric`
+            attribute of :class:`~mplugin.metric.Metric`
         :param fmt_metric: string or callable to convert
             context and associated metric to a human readable string
         :param result_cls: use this class (usually a
@@ -62,7 +62,7 @@ class Context(object):
     def evaluate(self, metric: "Metric", resource: "Resource") -> Result:
         """Determines state of a given metric.
 
-        This base implementation returns :class:`~monitoringplugin.state.Ok`
+        This base implementation returns :class:`~mplugin.state.Ok`
         in all cases. Plugin authors may override this method in
         subclasses to specialize behaviour.
 
@@ -143,9 +143,9 @@ class ScalarContext(Context):
         are described in the :class:`Context` base class.
 
         :param warning: Warning threshold as
-            :class:`~monitoringplugin.range.Range` object or range string.
+            :class:`~mplugin.range.Range` object or range string.
         :param critical: Critical threshold as
-            :class:`~monitoringplugin.range.Range` object or range string.
+            :class:`~mplugin.range.Range` object or range string.
         """
         super(ScalarContext, self).__init__(name, fmt_metric, result_cls)
         self.warning = Range(warning)
@@ -162,7 +162,7 @@ class ScalarContext(Context):
 
         :param metric: metric that is to be evaluated
         :param resource: not used
-        :returns: :class:`~monitoringplugin.result.Result` object
+        :returns: :class:`~mplugin.result.Result` object
         """
         if not self.critical.match(metric.value):
             return self.result_cls(critical, self.critical.violation, metric)
@@ -175,12 +175,12 @@ class ScalarContext(Context):
 
         The metric's attributes are combined with the local
         :attr:`warning` and :attr:`critical` ranges to get a
-        fully populated :class:`~monitoringplugin.performance.Performance`
+        fully populated :class:`~mplugin.performance.Performance`
         object.
 
         :param metric: metric from which performance data are derived
         :param resource: not used
-        :returns: :class:`~monitoringplugin.performance.Performance` object
+        :returns: :class:`~mplugin.performance.Performance` object
         """
         return Performance(
             metric.name,
