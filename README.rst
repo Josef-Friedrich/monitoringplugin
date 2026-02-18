@@ -1,5 +1,5 @@
 The monitoringplugin library
-========================
+============================
 
 About
 -----
@@ -25,9 +25,9 @@ and Python 3.9 and later.
 Feedback and Suggestions
 ------------------------
 
-monitoringplugin is currently maintained by Matt Pounsett <matt@conundrum.com>.  A
+monitoringplugin is currently maintained by Josef Friedrich <josef@friedrich.rocks>.  A
 public issue tracker can be found at
-<https://github.com/mpounsett/monitoringplugin/issues> for bugs, suggestions, and
+<https://github.com/Josef-Friedrich/monitoringplugin/issues> for bugs, suggestions, and
 patches.
 
 License
