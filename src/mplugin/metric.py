@@ -44,7 +44,7 @@ class Metric:
     uom: Optional[str] = None
     min: Optional[float] = None
     max: Optional[float] = None
-    context: Optional[str] = None
+    context: str
     contextobj: Optional["Context"] = None
     resource: Optional["Resource"] = None
 

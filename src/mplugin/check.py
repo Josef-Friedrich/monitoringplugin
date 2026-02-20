@@ -85,8 +85,8 @@ class Check:
         return self
 
     def _evaluate_resource(self, resource: Resource) -> None:
+        metric = None
         try:
-            metric = None
             metrics = resource.probe()
             if not metrics:
                 _log.warning("resource %s did not produce any metric", resource.name)
@@ -99,7 +99,7 @@ class Check:
                 result = metric.evaluate()
                 if isinstance(result, Result):
                     self.results.add(result)
-                elif isinstance(result, ServiceState): # type: ignore
+                elif isinstance(result, ServiceState):  # type: ignore
                     self.results.add(Result(result, metric=metric))
                 else:
                     raise ValueError(
