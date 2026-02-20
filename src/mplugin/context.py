@@ -18,7 +18,7 @@ from typing import Callable, Optional, Union
 from .performance import Performance
 from .range import Range, RangeSpec
 from .result import Result
-from .state import ServiceState, critical, ok, warn
+from .state import ServiceState, critical, ok, unknown, warn
 
 if typing.TYPE_CHECKING:
     from .metric import Metric
@@ -75,6 +75,26 @@ class Context:
         """
         return self.result_cls(ok, metric=metric)
 
+    def ok(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(ok, hint=hint, metric=metric)
+
+    def warn(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(warn, hint=hint, metric=metric)
+
+    def critical(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(critical, hint=hint, metric=metric)
+
+    def unknown(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(unknown, hint=hint, metric=metric)
+
     # This could be corrected by re-implementing this class as a proper ABC.
     # See issue #43
     # pylint: disable-next=no-self-use
@@ -127,9 +147,9 @@ class Context:
 
 
 class ScalarContext(Context):
-    warning: Range
+    warn_range: Range
 
-    critical: Range
+    critical_range: Range
 
     def __init__(
         self,
@@ -153,8 +173,8 @@ class ScalarContext(Context):
             :class:`~mplugin.range.Range` object or range string.
         """
         super(ScalarContext, self).__init__(name, fmt_metric, result_cls)
-        self.warning = Range(warning)
-        self.critical = Range(critical)
+        self.warn_range = Range(warning)
+        self.critical_range = Range(critical)
 
     def evaluate(self, metric: "Metric", resource: "Resource") -> Result:
         """Compares metric with ranges and determines result state.
@@ -169,10 +189,10 @@ class ScalarContext(Context):
         :param resource: not used
         :returns: :class:`~mplugin.result.Result` object
         """
-        if not self.critical.match(metric.value):
-            return self.result_cls(critical, self.critical.violation, metric)
-        if not self.warning.match(metric.value):
-            return self.result_cls(warn, self.warning.violation, metric)
+        if not self.critical_range.match(metric.value):
+            return self.result_cls(critical, self.critical_range.violation, metric)
+        if not self.warn_range.match(metric.value):
+            return self.result_cls(warn, self.warn_range.violation, metric)
         return self.result_cls(ok, None, metric)
 
     def performance(self, metric: "Metric", resource: "Resource") -> Performance:
@@ -191,8 +211,8 @@ class ScalarContext(Context):
             metric.name,
             metric.value,
             metric.uom,
-            self.warning,
-            self.critical,
+            self.warn_range,
+            self.critical_range,
             metric.min,
             metric.max,
         )

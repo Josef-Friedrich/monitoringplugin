@@ -5,7 +5,11 @@ This is a fork of the `nagiosplugin`_. Changes:
 
 - Type hints
 - Removed deprecated code: ``ScalarResult``
-- ``Ok`` renamed to ``ok``
+- ``Ok`` renamed to ``ok`` etc ...
+- Export ``ServiceState``
+- Convert all namped tuples in classes (``Metric``, ``Performance``, ``ServiceState``)
+- Remove compat.py
+- Add helper methods ok(), warn(), critical(), unknown() in Context
 
 About
 -----
