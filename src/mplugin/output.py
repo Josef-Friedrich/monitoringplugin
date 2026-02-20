@@ -15,7 +15,7 @@ def filter_output(output: str, filtered: str) -> str:
     return output
 
 
-class Output(object):
+class Output:
     ILLEGAL = "|"
 
     logchan: StreamHandler[StringIO]
