@@ -3,7 +3,7 @@ import tempfile
 import pytest
 
 import mplugin
-from mplugin.logtail import LogTail
+from mplugin import LogTail
 
 
 class TestLogTail:

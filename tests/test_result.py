@@ -1,8 +1,7 @@
 import pytest
 
 import mplugin
-from mplugin.result import Result, Results
-from mplugin.state import critical, ok, unknown, warn
+from mplugin import Result, Results, critical, ok, unknown, warn
 
 
 class TestResult:

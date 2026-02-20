@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-from mplugin.cookie import Cookie
+from mplugin import Cookie
 
 
 class TestCookie:

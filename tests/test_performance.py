@@ -1,6 +1,6 @@
 import pytest
 
-from mplugin.performance import Performance
+from mplugin import Performance
 
 
 def test_normal_label() -> None:

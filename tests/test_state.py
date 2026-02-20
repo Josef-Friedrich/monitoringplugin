@@ -1,4 +1,4 @@
-from mplugin.state import critical, ok, unknown, warn, worst
+from mplugin import critical, ok, unknown, warn, worst
 
 
 class TestState:

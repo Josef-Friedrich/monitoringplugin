@@ -3,7 +3,7 @@ import time
 import pytest
 
 import mplugin
-from mplugin.platform import with_timeout
+from mplugin import with_timeout
 
 
 class TestPlatform:

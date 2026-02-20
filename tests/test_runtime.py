@@ -4,7 +4,7 @@ from io import StringIO
 import pytest
 
 import mplugin
-from mplugin.runtime import Runtime, guarded
+from mplugin import Runtime, guarded
 
 
 def make_check():

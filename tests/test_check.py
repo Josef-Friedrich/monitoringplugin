@@ -1,7 +1,7 @@
 import pytest
 
 import mplugin
-from mplugin.check import Check
+from mplugin import Check
 
 
 class FakeSummary(mplugin.Summary):

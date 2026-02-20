@@ -3,11 +3,19 @@ from typing import Optional
 import pytest
 
 import mplugin
-from mplugin.context import Context, Contexts, ScalarContext
-from mplugin.metric import Metric
-from mplugin.resource import Resource
-from mplugin.result import Result
-from mplugin.state import ServiceState, critical, ok, unknown, warn
+from mplugin import (
+    Context,
+    Contexts,
+    Metric,
+    Resource,
+    Result,
+    ScalarContext,
+    ServiceState,
+    critical,
+    ok,
+    unknown,
+    warn,
+)
 
 
 class TestContext:

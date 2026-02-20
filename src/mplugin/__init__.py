@@ -1,18 +1,36 @@
 from __future__ import annotations
 
+import collections
 import functools
 import importlib
+import io
 import json
+import logging
+import numbers
 import os
+import re
+import sys
+import traceback
 import typing
 from collections import UserDict
 from importlib import metadata
-from io import BufferedIOBase
+from io import BufferedIOBase, StringIO
+from logging import StreamHandler
 from tempfile import TemporaryFile
 from types import TracebackType
-from typing import Any, Iterator, Optional, Union
+from typing import (
+    Any,
+    Callable,
+    Iterator,
+    NoReturn,
+    Optional,
+    ParamSpec,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
-from typing_extensions import Self
+from typing_extensions import Self, Unpack
 
 __version__: str = metadata.version("mplugin")
 
@@ -318,7 +336,7 @@ class MultiArg:
 # Changing the badly-named `t` variable at this point is likely API-breaking,
 # so it will be left in place.
 # pylint: disable-next=invalid-name
-def with_timeout(t, func, *args, **kwargs):
+def with_timeout(t, func, *args: Any, **kwargs: Any) -> None:
     """Call `func` but terminate after `t` seconds."""
 
     if os.name == "posix":
@@ -494,7 +512,9 @@ class Cookie(UserDict[str, Any]):
         self.fobj.flush()
         os.fsync(self.fobj)
 
+
 # logtail.py
+
 
 class LogTail:
     """Access previously unseen parts of a growing file.
@@ -567,3 +587,1269 @@ class LogTail:
         self.cookie.close()
         if self.logfile is not None:
             self.logfile.close()
+
+
+# output.py
+
+
+def filter_output(output: str, filtered: str) -> str:
+    """Filters out characters from output"""
+    for char in filtered:
+        output = output.replace(char, "")
+    return output
+
+
+class Output:
+    ILLEGAL = "|"
+
+    logchan: StreamHandler[StringIO]
+    verbose: int
+    status: str
+    out: list[str]
+    warnings: list[str]
+    longperfdata: list[str]
+
+    def __init__(self, logchan: StreamHandler[StringIO], verbose: int = 0) -> None:
+        self.logchan = logchan
+        self.verbose = verbose
+        self.status = ""
+        self.out = []
+        self.warnings = []
+        self.longperfdata = []
+
+    def add(self, check: "Check") -> None:
+        self.status = self.format_status(check)
+        if self.verbose == 0:
+            perfdata = self.format_perfdata(check)
+            if perfdata:
+                self.status += " " + perfdata
+        else:
+            self.add_longoutput(check.verbose_str)
+            self.longperfdata.append(self.format_perfdata(check, 79))
+
+    def format_status(self, check: "Check"):
+        if check.name:
+            name_prefix = check.name.upper() + " "
+        else:
+            name_prefix = ""
+        summary_str = check.summary_str.strip()
+        return self._screen_chars(
+            "{0}{1}{2}".format(
+                name_prefix,
+                str(check.state).upper(),
+                " - " + summary_str if summary_str else "",
+            ),
+            "status line",
+        )
+
+    # Needs refactoring, but won't remove now because it's probably API-breaking
+    # pylint: disable-next=unused-argument
+    def format_perfdata(self, check: "Check", linebreak: typing.Any = None) -> str:
+        if not check.perfdata:
+            return ""
+        out = " ".join(check.perfdata)
+        return "| " + self._screen_chars(out, "perfdata")
+
+    def add_longoutput(self, text: str | list[str] | tuple[str]) -> None:
+        if isinstance(text, (list, tuple)):
+            for line in text:
+                self.add_longoutput(line)
+        else:
+            self.out.append(self._screen_chars(text, "long output"))
+
+    def __str__(self):
+        output = [
+            elem
+            for elem in [self.status]
+            + self.out
+            + [self._screen_chars(self.logchan.stream.getvalue(), "logging output")]
+            + self.warnings
+            + self.longperfdata
+            if elem
+        ]
+        return "\n".join(output) + "\n"
+
+    def _screen_chars(self, text: str, where: str) -> str:
+        text = text.rstrip("\n")
+        screened = filter_output(text, self.ILLEGAL)
+        if screened != text:
+            self.warnings.append(
+                self._illegal_chars_warning(where, set(text) - set(screened))
+            )
+        return screened
+
+    @staticmethod
+    def _illegal_chars_warning(where: str, removed_chars: set[str]) -> str:
+        hex_chars = ", ".join("0x{0:x}".format(ord(c)) for c in removed_chars)
+        return "warning: removed illegal characters ({0}) from {1}".format(
+            hex_chars, where
+        )
+
+
+# performance.py
+
+
+def quote(label: str) -> str:
+    if re.match(r"^\w+$", label):
+        return label
+    return f"'{label}'"
+
+
+class Performance:
+    """
+    Performance data (perfdata) representation.
+
+    :term:`Performance data` are created during metric evaluation in a context
+    and are written into the *perfdata* section of the plugin's output.
+    :class:`Performance` allows the creation of value objects that are passed
+    between other mplugin objects.
+
+    For sake of consistency, performance data should represent their values in
+    their respective base unit, so `Performance('size', 10000, 'B')` is better
+    than `Performance('size', 10, 'kB')`.
+    https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/monitoring_plugins_interface/03.Output.md#performance-data
+    """
+
+    label: str
+    """short identifier, results in graph titles for example (20 chars or less recommended)"""
+
+    value: Any
+    """measured value (usually an int, float, or bool)"""
+
+    uom: Optional[str]
+    """unit of measure -- use base units whereever possible"""
+
+    warn: Optional["RangeSpec"]
+    """warning range"""
+
+    crit: Optional["RangeSpec"]
+    """critical range"""
+
+    min: Optional[float]
+    """known value minimum (None for no minimum)"""
+
+    max: Optional[float]
+    """known value maximum (None for no maximum)"""
+
+    # Changing these now would be API-breaking, so we'll ignore these
+    # shadowed built-ins and the long list of arguments
+    # pylint: disable-next=redefined-builtin,too-many-arguments
+    def __init__(
+        self,
+        label: str,
+        value: Any,
+        uom: Optional[str] = None,
+        warn: Optional["RangeSpec"] = None,
+        crit: Optional["RangeSpec"] = None,
+        min: Optional[float] = None,
+        max: Optional[float] = None,
+    ) -> None:
+        """Create new performance data object.
+
+        :param label: short identifier, results in graph
+            titles for example (20 chars or less recommended)
+        :param value: measured value (usually an int, float, or bool)
+        :param uom: unit of measure -- use base units whereever possible
+        :param warn: warning range
+        :param crit: critical range
+        :param min: known value minimum (None for no minimum)
+        :param max: known value maximum (None for no maximum)
+        """
+        if "'" in label or "=" in label:
+            raise RuntimeError("label contains illegal characters", label)
+        self.label = label
+        self.value = value
+        self.uom = uom
+        self.warn = warn
+        self.crit = crit
+        self.min = min
+        self.max = max
+
+    def __str__(self) -> str:
+        """String representation conforming to the plugin API.
+
+        Labels containing spaces or special characters will be quoted.
+        """
+
+        performance: str = f"{quote(self.label)}={self.value}"
+
+        if self.uom is not None:
+            performance += self.uom
+
+        out: list[str] = [performance]
+
+        if self.warn is not None and self.warn != "" and self.warn != Range(""):
+            out.append(str(self.warn))
+
+        if self.crit is not None and self.crit != "" and self.crit != Range(""):
+            out.append(str(self.crit))
+
+        if self.min is not None:
+            out.append(str(self.min))
+
+        if self.max is not None:
+            out.append(str(self.max))
+
+        return ";".join(out)
+
+
+# runtime.py
+
+"""Functions and classes to interface with the system.
+
+This module contains the :class:`Runtime` class that handles exceptions,
+timeouts and logging. Plugin authors should not use Runtime directly,
+but decorate the plugin's main function with :func:`~.runtime.guarded`.
+"""
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def guarded(
+    original_function: Optional[Callable[P, R]] = None, verbose: Optional[int] = None
+) -> Callable[P, R]:
+    """Runs a function mplugin's Runtime environment.
+
+    `guarded` makes the decorated function behave correctly with respect
+    to the Nagios plugin API if it aborts with an uncaught exception or
+    a timeout. It exits with an *unknown* exit code and prints a
+    traceback in a format acceptable by Nagios.
+
+    This function should be used as a decorator for the script's `main`
+    function.
+
+    :param verbose: Optional keyword parameter to control verbosity
+        level during early execution (before
+        :meth:`~mplugin.Check.main` has been called). For example,
+        use `@guarded(verbose=0)` to turn tracebacks in that phase off.
+    """
+
+    def _decorate(func: Callable[P, R]):
+        @functools.wraps(func)
+        # This inconsistent-return-statements error can be fixed by adding a
+        # NoReturn type hint to Runtime._handle_exception(), but we can't do
+        # that as long as we're maintaining py27 compatability.
+        # pylint: disable-next=inconsistent-return-statements
+        def wrapper(*args: Any, **kwds: Any):
+            runtime = Runtime()
+            if verbose is not None:
+                runtime.verbose = verbose
+            try:
+                return func(*args, **kwds)
+            except Timeout as exc:
+                runtime._handle_exception(  # type: ignore
+                    "Timeout: check execution aborted after {0}".format(exc)
+                )
+            except Exception:
+                runtime._handle_exception()  # type: ignore
+
+        return wrapper
+
+    if original_function is not None:
+        assert callable(original_function), (
+            'Function {!r} not callable. Forgot to add "verbose=" keyword?'.format(
+                original_function
+            )
+        )
+        return _decorate(original_function)
+    return _decorate  # type: ignore
+
+
+class Runtime:
+    instance = None
+    check: Optional["Check"] = None
+    _verbose = 1
+    timeout: Optional[int] = None
+    logchan: logging.StreamHandler[io.StringIO]
+    output: Output
+    stdout = None
+    exitcode: int = 70  # EX_SOFTWARE
+
+    def __new__(cls) -> Self:
+        if not cls.instance:
+            cls.instance = super(Runtime, cls).__new__(cls)
+        return cls.instance
+
+    def __init__(self) -> None:
+        rootlogger = logging.getLogger(__name__.split(".", 1)[0])
+        rootlogger.setLevel(logging.DEBUG)
+        self.logchan = logging.StreamHandler(io.StringIO())
+        self.logchan.setFormatter(logging.Formatter("%(message)s"))
+        rootlogger.addHandler(self.logchan)
+        self.output = Output(self.logchan)
+
+    def _handle_exception(self, statusline: Optional[str] = None) -> NoReturn:
+        exc_type, value = sys.exc_info()[0:2]
+        name = self.check.name.upper() + " " if self.check else ""
+        self.output.status = "{0}UNKNOWN: {1}".format(
+            name,
+            statusline or traceback.format_exception_only(exc_type, value)[0].strip(),
+        )
+        if self.verbose > 0:
+            self.output.add_longoutput(traceback.format_exc())
+        print("{0}".format(self.output), end="", file=self.stdout)
+        self.exitcode = 3
+        self.sysexit()
+
+    @property
+    def verbose(self) -> int:
+        return self._verbose
+
+    @verbose.setter
+    def verbose(self, verbose: Any) -> None:
+        if isinstance(verbose, int):
+            self._verbose = verbose
+        elif isinstance(verbose, float):
+            self._verbose = int(verbose)
+        else:
+            self._verbose = len(verbose or [])
+        if self._verbose >= 3:
+            self.logchan.setLevel(logging.DEBUG)
+            self._verbose = 3
+        elif self._verbose == 2:
+            self.logchan.setLevel(logging.INFO)
+        else:
+            self.logchan.setLevel(logging.WARNING)
+        self.output.verbose = self._verbose
+
+    def run(self, check: "Check") -> None:
+        check()
+        self.output.add(check)
+        self.exitcode = check.exitcode
+
+    def execute(
+        self, check: "Check", verbose: Any = None, timeout: Any = None
+    ) -> NoReturn:
+        self.check = check
+        if verbose is not None:
+            self.verbose = verbose
+        if timeout is not None:
+            self.timeout = int(timeout)
+        if self.timeout:
+            with_timeout(self.timeout, self.run, check)
+        else:
+            self.run(check)
+        print("{0}".format(self.output), end="", file=self.stdout)
+        self.sysexit()
+
+    def sysexit(self) -> NoReturn:
+        sys.exit(self.exitcode)
+
+
+# metric.py
+
+"""Structured representation for data points.
+
+This module contains the :class:`Metric` class whose instances are
+passed as value objects between most of mplugin's core classes.
+Typically, :class:`~.resource.Resource` objects emit a list of metrics
+as result of their :meth:`~.resource.Resource.probe` methods.
+"""
+
+
+class MetricKwargs(TypedDict, total=False):
+    name: str
+    value: Any
+    uom: str
+    min: float
+    max: float
+    context: str
+    contextobj: "Context"
+    resource: "Resource"
+
+
+class Metric:
+    """Single measured value.
+
+    The value should be expressed in terms of base units, so
+    Metric('swap', 10240, 'B') is better than Metric('swap', 10, 'kiB').
+    """
+
+    name: str
+    value: Any
+    uom: Optional[str] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    context: str
+    contextobj: Optional["Context"] = None
+    resource: Optional["Resource"] = None
+
+    # Changing these now would be API-breaking, so we'll ignore these
+    # shadowed built-ins
+    # pylint: disable-next=redefined-builtin
+    def __init__(
+        self,
+        name: str,
+        value: Any,
+        uom: Optional[str] = None,
+        min: Optional[float] = None,
+        max: Optional[float] = None,
+        context: Optional[str] = None,
+        contextobj: Optional["Context"] = None,
+        resource: Optional["Resource"] = None,
+    ) -> None:
+        """Creates new Metric instance.
+
+        :param name: short internal identifier for the value -- appears
+            also in the performance data
+        :param value: data point, usually has a boolen or numeric type,
+            but other types are also possible
+        :param uom: :term:`unit of measure`, preferrably as ISO
+            abbreviation like "s"
+        :param min: minimum value or None if there is no known minimum
+        :param max: maximum value or None if there is no known maximum
+        :param context: name of the associated context (defaults to the
+            metric's name if left out)
+        :param contextobj: reference to the associated context object
+            (set automatically by :class:`~mplugin.check.Check`)
+        :param resource: reference to the originating
+            :class:`~mplugin.resource.Resource` (set automatically
+            by :class:`~mplugin.check.Check`)
+        """
+        self.name = name
+        self.value = value
+        self.uom = uom
+        self.min = min
+        self.max = max
+        if context is not None:
+            self.context = context
+        else:
+            self.context = name
+        self.contextobj = contextobj
+        self.resource = resource
+
+    def __str__(self):
+        """Same as :attr:`valueunit`."""
+        return self.valueunit
+
+    def replace(self, **attr: Unpack[MetricKwargs]) -> Self:
+        """Creates new instance with updated attributes."""
+        for key, value in attr.items():
+            setattr(self, key, value)
+        return self
+
+    @property
+    def description(self):
+        """Human-readable, detailed string representation.
+
+        Delegates to the :class:`~.context.Context` to format the value.
+
+        :returns: :meth:`~.context.Context.describe` output or
+            :attr:`valueunit` if no context has been associated yet
+        """
+        if self.contextobj:
+            return self.contextobj.describe(self)
+        return str(self)
+
+    @property
+    def valueunit(self) -> str:
+        """Compact string representation.
+
+        This is just the value and the unit. If the value is a real
+        number, express the value with a limited number of digits to
+        improve readability.
+        """
+        return "%s%s" % (self._human_readable_value, self.uom or "")
+
+    @property
+    def _human_readable_value(self) -> str:
+        """Limit number of digits for floats."""
+        if isinstance(self.value, numbers.Real) and not isinstance(
+            self.value, numbers.Integral
+        ):
+            return "%.4g" % self.value
+        return str(self.value)
+
+    def evaluate(self) -> Union["Result", "ServiceState"]:
+        """Evaluates this instance according to the context.
+
+        :return: :class:`~mplugin.result.Result` object
+        :raise RuntimeError: if no context has been associated yet
+        """
+        if not self.contextobj:
+            raise RuntimeError("no context set for metric", self.name)
+        if not self.resource:
+            raise RuntimeError("no resource set for metric", self.name)
+        return self.contextobj.evaluate(self, self.resource)
+
+    def performance(self) -> Optional[Performance]:
+        """Generates performance data according to the context.
+
+        :return: :class:`~mplugin.performance.Performance` object
+        :raise RuntimeError: if no context has been associated yet
+        """
+        if not self.contextobj:
+            raise RuntimeError("no context set for metric", self.name)
+        if not self.resource:
+            raise RuntimeError("no resource set for metric", self.name)
+        return self.contextobj.performance(self, self.resource)
+
+
+# resource.py
+
+"""Domain model for data :term:`acquisition`.
+
+:class:`Resource` is the base class for the plugin's :term:`domain
+model`. It shoul model the relevant details of reality that a plugin is
+supposed to check. The :class:`~.check.Check` controller calls
+:meth:`Resource.probe` on all passed resource objects to acquire data.
+
+Plugin authors should subclass :class:`Resource` and write
+whatever methods are needed to get the interesting bits of information.
+The most important resource subclass should be named after the plugin
+itself.
+"""
+
+
+class Resource:
+    """Abstract base class for custom domain models.
+
+    Subclasses may add arguments to the constructor to parametrize
+    information retrieval.
+    """
+
+    @property
+    def name(self) -> str:
+        return self.__class__.__name__
+
+    # This could be corrected by re-implementing this class as a proper ABC.
+    # See issue #42
+    # pylint: disable=no-self-use
+    def probe(
+        self,
+    ) -> Union[list["Metric"], "Metric", typing.Generator["Metric", None, None]]:
+        """Query system state and return metrics.
+
+        This is the only method called by the check controller.
+        It should trigger all necessary actions and create metrics.
+
+        :return: list of :class:`~mplugin.metric.Metric` objects,
+            or generator that emits :class:`~mplugin.metric.Metric`
+            objects, or single :class:`~mplugin.metric.Metric`
+            object
+        """
+        return []
+
+
+# result.py
+
+"""Outcomes from evaluating metrics in contexts.
+
+The :class:`Result` class is the base class for all evaluation results.
+The :class:`Results` class (plural form) provides a result container with
+access functions and iterators.
+
+Plugin authors may create their own :class:`Result` subclass to
+accomodate for special needs. :class:`~.context.Context` constructors
+accept custom Result subclasses in the `result_cls` parameter.
+"""
+
+
+class Result:
+    """Evaluation outcome consisting of state and explanation.
+
+    A Result object is typically emitted by a
+    :class:`~mplugin.context.Context` object and represents the
+    outcome of an evaluation. It contains a
+    :class:`~mplugin.state.ServiceState` as well as an explanation.
+    Plugin authors may subclass Result to implement specific features.
+    """
+
+    state: "ServiceState"
+
+    hint: Optional[str]
+
+    metric: Optional["Metric"]
+
+    def __init__(
+        self,
+        state: "ServiceState",
+        hint: Optional[str] = None,
+        metric: Optional["Metric"] = None,
+    ) -> None:
+        self.state = state
+        self.hint = hint
+        self.metric = metric
+
+    def __str__(self) -> str:
+        """Textual result explanation.
+
+        The result explanation is taken from :attr:`metric.description`
+        (if a metric has been passed to the constructur), followed
+        optionally by the value of :attr:`hint`. This method's output
+        should consist only of a text for the reason but not for the
+        result's state. The latter is rendered independently.
+
+        :returns: result explanation or empty string
+        """
+        if self.metric and self.metric.description:
+            desc = self.metric.description
+        else:
+            desc = None
+
+        if self.hint and desc:
+            return "{0} ({1})".format(desc, self.hint)
+        if self.hint:
+            return self.hint
+        if desc:
+            return desc
+        return ""
+
+    @property
+    def resource(self) -> Optional["Resource"]:
+        """Reference to the resource used to generate this result."""
+        if not self.metric:
+            return None
+        return self.metric.resource
+
+    @property
+    def context(self) -> Optional["Context"]:
+        """Reference to the metric used to generate this result."""
+        if not self.metric:
+            return None
+        return self.metric.contextobj
+
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, Result):
+            return False
+        return (
+            self.state == value.state
+            and self.hint == value.hint
+            and self.metric == value.metric
+        )
+
+
+class Results:
+    """Container for result sets.
+
+    Basically, this class manages a set of results and provides
+    convenient access methods by index, name, or result state. It is
+    meant to make queries in :class:`~.summary.Summary`
+    implementations compact and readable.
+
+    The constructor accepts an arbitrary number of result objects and
+    adds them to the container.
+    """
+
+    results: list[Result]
+    by_state: dict["ServiceState", list[Result]]
+    by_name: dict[str, Result]
+
+    def __init__(self, *results: Result) -> None:
+        self.results = []
+        self.by_state = collections.defaultdict(list)
+        self.by_name = {}
+        if results:
+            self.add(*results)
+
+    def add(self, *results: Result):
+        """Adds more results to the container.
+
+        Besides passing :class:`Result` objects in the constructor,
+        additional results may be added after creating the container.
+
+        :raises ValueError: if `result` is not a :class:`Result` object
+        """
+        for result in results:
+            if not isinstance(result, Result):  # type: ignore
+                raise ValueError(
+                    "trying to add non-Result to Results container", result
+                )
+            self.results.append(result)
+            self.by_state[result.state].append(result)
+            try:
+                self.by_name[result.metric.name] = result  # type: ignore
+            except AttributeError:
+                pass
+        return self
+
+    def __iter__(self):
+        """Iterates over all results.
+
+        The iterator is sorted in order of decreasing state
+        significance (unknown > critical > warning > ok).
+
+        :returns: result object iterator
+        """
+        for state in reversed(sorted(self.by_state)):
+            for result in self.by_state[state]:
+                yield result
+
+    def __len__(self):
+        """Number of results in this container."""
+        return len(self.results)
+
+    def __getitem__(self, item: Union[int, str]) -> Result:
+        """Access result by index or name.
+
+        If *item* is an integer, the itemth element in the
+        container is returned. If *item* is a string, it is used to
+        look up a result with the given name.
+
+        :returns: :class:`Result` object
+        :raises KeyError: if no matching result is found
+        """
+        if isinstance(item, int):
+            return self.results[item]
+        return self.by_name[item]
+
+    def __contains__(self, name: str) -> bool:
+        """Tests if a result with given name is present.
+
+        :returns: boolean
+        """
+        return name in self.by_name
+
+    @property
+    def most_significant_state(self) -> "ServiceState":
+        """The "worst" state found in all results.
+
+        :returns: :obj:`~mplugin.state.ServiceState` object
+        :raises ValueError: if no results are present
+        """
+        return max(self.by_state.keys())
+
+    @property
+    def most_significant(self) -> list[Result]:
+        """Returns list of results with most significant state.
+
+        From all results present, a subset with the "worst" state is
+        selected.
+
+        :returns: list of :class:`Result` objects or empty list if no
+            results are present
+        """
+        try:
+            return self.by_state[self.most_significant_state]
+        except ValueError:
+            return []
+
+    @property
+    def first_significant(self) -> Result:
+        """Selects one of the results with most significant state.
+
+        :returns: :class:`Result` object
+        :raises IndexError: if no results are present
+        """
+        return self.most_significant[0]
+
+
+# summary.py
+
+"""Create status line from results.
+
+This module contains the :class:`Summary` class which serves as base
+class to get a status line from the check's :class:`~.result.Results`. A
+Summary object is used by :class:`~.check.Check` to obtain a suitable data
+:term:`presentation` depending on the check's overall state.
+
+Plugin authors may either stick to the default implementation or subclass it
+to adapt it to the check's domain. The status line is probably the most
+important piece of text returned from a check: It must lead directly to the
+problem in the most concise way. So while the default implementation is quite
+usable, plugin authors should consider subclassing to provide a specific
+implementation that gets the output to the point.
+"""
+
+
+class Summary:
+    """Creates a summary formatter object.
+
+    This base class takes no parameters in its constructor, but subclasses may
+    provide more elaborate constructors that accept parameters to influence
+    output creation.
+    """
+
+    # It might be possible to re-implement this as a @staticmethod,
+    # but this might be an API-breaking change, so it should probably stay in
+    # place until a 2.x rewrite.  If this can't be a @staticmethod, then it
+    # should probably be an @abstractmethod.
+    # See issue #44
+    # pylint: disable-next=no-self-use
+    def ok(self, results: "Results") -> str:
+        """Formats status line when overall state is ok.
+
+        The default implementation returns a string representation of
+        the first result.
+
+        :param results: :class:`~mplugin.result.Results` container
+        :returns: status line
+        """
+        return "{0}".format(results[0])
+
+    # It might be possible to re-implement this as a @staticmethod,
+    # but this might be an API-breaking change, so it should probably stay in
+    # place until a 2.x rewrite.  If this can't be a @staticmethod, then it
+    # should probably be an @abstractmethod.
+    # See issue #44
+    # pylint: disable-next=no-self-use
+    def problem(self, results: "Results") -> str:
+        """Formats status line when overall state is not ok.
+
+        The default implementation returns a string representation of te
+        first significant result, i.e. the result with the "worst"
+        state.
+
+        :param results: :class:`~.result.Results` container
+        :returns: status line
+        """
+        return "{0}".format(results.first_significant)
+
+    # It might be possible to re-implement this as a @staticmethod,
+    # but this might be an API-breaking change, so it should probably stay in
+    # place until a 2.x rewrite.  If this can't be a @staticmethod, then it
+    # should probably be an @abstractmethod.
+    # See issue #44
+    # pylint: disable-next=no-self-use
+    def verbose(self, results: "Results") -> list[str]:
+        """Provides extra lines if verbose plugin execution is requested.
+
+        The default implementation returns a list of all resources that are in
+        a non-ok state.
+
+        :param results: :class:`~.result.Results` container
+        :returns: list of strings
+        """
+        msgs: list[str] = []
+        for result in results:
+            if result.state == ok:
+                continue
+            msgs.append("{0}: {1}".format(result.state, result))
+        return msgs
+
+    # It might be possible to re-implement this as a @staticmethod,
+    # but this might be an API-breaking change, so it should probably stay in
+    # place until a 2.x rewrite.  If this can't be a @staticmethod, then it
+    # should probably be an @abstractmethod.
+    # See issue #44
+    # pylint: disable-next=no-self-use
+    def empty(self) -> typing.Literal["no check results"]:
+        """Formats status line when the result set is empty.
+
+        :returns: status line
+        """
+        return "no check results"
+
+
+# context.py
+
+"""Metadata about metrics to perform data :term:`evaluation`.
+
+This module contains the :class:`Context` class, which is the base for
+all contexts. :class:`ScalarContext` is an important specialization to
+cover numeric contexts with warning and critical thresholds. The
+:class:`~.check.Check` controller selects a context for each
+:class:`~.metric.Metric` by matching the metric's `context` attribute with the
+context's `name`. The same context may be used for several metrics.
+
+Plugin authors may just use to :class:`ScalarContext` in the majority of cases.
+Sometimes is better to subclass :class:`Context` instead to implement custom
+evaluation or performance data logic.
+"""
+
+
+FmtMetric = str | Callable[["Metric", "Context"], str]
+
+
+class Context:
+    name: str
+    fmt_metric: Optional[FmtMetric]
+    result_cls: type[Result]
+
+    def __init__(
+        self,
+        name: str,
+        fmt_metric: Optional[FmtMetric] = None,
+        result_cls: type[Result] = Result,
+    ) -> None:
+        """Creates generic context identified by `name`.
+
+        Generic contexts just format associated metrics and evaluate
+        always to :obj:`~mplugin.state.Ok`. Metric formatting is
+        controlled with the :attr:`fmt_metric` attribute. It can either
+        be a string or a callable. See the :meth:`describe` method for
+        how formatting is done.
+
+        :param name: context name that is matched by the context
+            attribute of :class:`~mplugin.metric.Metric`
+        :param fmt_metric: string or callable to convert
+            context and associated metric to a human readable string
+        :param result_cls: use this class (usually a
+            :class:`~.result.Result` subclass) to represent the
+            evaluation outcome
+        """
+        self.name = name
+        self.fmt_metric = fmt_metric
+        self.result_cls = result_cls
+
+    def evaluate(
+        self, metric: "Metric", resource: "Resource"
+    ) -> Union[Result, ServiceState]:
+        """Determines state of a given metric.
+
+        This base implementation returns :class:`~mplugin.state.Ok`
+        in all cases. Plugin authors may override this method in
+        subclasses to specialize behaviour.
+
+        :param metric: associated metric that is to be evaluated
+        :param resource: resource that produced the associated metric
+            (may optionally be consulted)
+        :returns: :class:`~.result.Result` or
+            :class:`~.state.ServiceState` object
+        """
+        return self.result_cls(ok, metric=metric)
+
+    def ok(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(ok, hint=hint, metric=metric)
+
+    def warn(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(warn, hint=hint, metric=metric)
+
+    def critical(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(critical, hint=hint, metric=metric)
+
+    def unknown(
+        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+    ) -> Result:
+        return Result(unknown, hint=hint, metric=metric)
+
+    # This could be corrected by re-implementing this class as a proper ABC.
+    # See issue #43
+    # pylint: disable-next=no-self-use
+    def performance(
+        self, metric: "Metric", resource: "Resource"
+    ) -> Optional[Performance]:
+        """Derives performance data from a given metric.
+
+        This base implementation just returns none. Plugin authors may
+        override this method in subclass to specialize behaviour.
+
+        :param metric: associated metric from which performance data are
+            derived
+        :param resource: resource that produced the associated metric
+            (may optionally be consulted)
+        :returns: :class:`~.performance.Performance` object or `None`
+        """
+        return None
+
+    def describe(self, metric: "Metric") -> Optional[str]:
+        """Provides human-readable metric description.
+
+        Formats the metric according to the :attr:`fmt_metric`
+        attribute. If :attr:`fmt_metric` is a string, it is evaluated as
+        format string with all metric attributes in the root namespace.
+        If :attr:`fmt_metric` is callable, it is called with the metric
+        and this context as arguments. If :attr:`fmt_metric` is not set,
+        this default implementation does not return a description.
+
+        Plugin authors may override this method in subclasses to control
+        text output more tightly.
+
+        :param metric: associated metric
+        :returns: description string or None
+        """
+        if not self.fmt_metric:
+            return None
+
+        if isinstance(self.fmt_metric, str):
+            return self.fmt_metric.format(
+                name=metric.name,
+                value=metric.value,
+                uom=metric.uom,
+                valueunit=metric.valueunit,
+                min=metric.min,
+                max=metric.max,
+            )
+
+        return self.fmt_metric(metric, self)
+
+
+class ScalarContext(Context):
+    warn_range: Range
+
+    critical_range: Range
+
+    def __init__(
+        self,
+        name: str,
+        warning: Optional[RangeSpec] = None,
+        critical: Optional[RangeSpec] = None,
+        fmt_metric: FmtMetric = "{name} is {valueunit}",
+        result_cls: type[Result] = Result,
+    ) -> None:
+        """Ready-to-use :class:`Context` subclass for scalar values.
+
+        ScalarContext models the common case where a single scalar is to
+        be evaluated against a pair of warning and critical thresholds.
+
+        :attr:`name`, :attr:`fmt_metric`, and :attr:`result_cls`,
+        are described in the :class:`Context` base class.
+
+        :param warning: Warning threshold as
+            :class:`~mplugin.range.Range` object or range string.
+        :param critical: Critical threshold as
+            :class:`~mplugin.range.Range` object or range string.
+        """
+        super(ScalarContext, self).__init__(name, fmt_metric, result_cls)
+        self.warn_range = Range(warning)
+        self.critical_range = Range(critical)
+
+    def evaluate(self, metric: "Metric", resource: "Resource") -> Result:
+        """Compares metric with ranges and determines result state.
+
+        The metric's value is compared to the instance's :attr:`warning`
+        and :attr:`critical` ranges, yielding an appropropiate state
+        depending on how the metric fits in the ranges. Plugin authors
+        may override this method in subclasses to provide custom
+        evaluation logic.
+
+        :param metric: metric that is to be evaluated
+        :param resource: not used
+        :returns: :class:`~mplugin.result.Result` object
+        """
+        if not self.critical_range.match(metric.value):
+            return self.result_cls(critical, self.critical_range.violation, metric)
+        if not self.warn_range.match(metric.value):
+            return self.result_cls(warn, self.warn_range.violation, metric)
+        return self.result_cls(ok, None, metric)
+
+    def performance(self, metric: "Metric", resource: "Resource") -> Performance:
+        """Derives performance data.
+
+        The metric's attributes are combined with the local
+        :attr:`warning` and :attr:`critical` ranges to get a
+        fully populated :class:`~mplugin.performance.Performance`
+        object.
+
+        :param metric: metric from which performance data are derived
+        :param resource: not used
+        :returns: :class:`~mplugin.performance.Performance` object
+        """
+        return Performance(
+            metric.name,
+            metric.value,
+            metric.uom,
+            self.warn_range,
+            self.critical_range,
+            metric.min,
+            metric.max,
+        )
+
+
+class Contexts:
+    """Container for collecting all generated contexts."""
+
+    by_name: dict[str, Context]
+
+    def __init__(self) -> None:
+        self.by_name = dict(
+            default=ScalarContext("default", "", ""), null=Context("null")
+        )
+
+    def add(self, context: Context) -> None:
+        self.by_name[context.name] = context
+
+    def __getitem__(self, context_name: str) -> Context:
+        try:
+            return self.by_name[context_name]
+        except KeyError:
+            raise KeyError(
+                "cannot find context",
+                context_name,
+                "known contexts: {0}".format(", ".join(self.by_name.keys())),
+            )
+
+    def __contains__(self, context_name: str) -> bool:
+        return context_name in self.by_name
+
+    def __iter__(self) -> typing.Iterator[str]:
+        return iter(self.by_name)
+
+
+# check.py
+
+"""Controller logic for check execution.
+
+This module contains the :class:`Check` class which orchestrates the
+the various stages of check execution. Interfacing with the
+outside system is done via a separate :class:`Runtime` object.
+
+When a check is called (using :meth:`Check.main` or
+:meth:`Check.__call__`), it probes all resources and evaluates the
+returned metrics to results and performance data. A typical usage
+pattern would be to populate a check with domain objects and then
+delegate control to it.
+"""
+
+
+_log = logging.getLogger(__name__)
+
+
+class Check:
+    resources: list[Resource]
+    contexts: Contexts
+    summary: Summary
+    results: Results
+    perfdata: list[str]
+    name: str
+
+    def __init__(
+        self,
+        *objects: Resource | Context | Summary | Results,
+        name: Optional[str] = None,
+    ) -> None:
+        """Creates and configures a check.
+
+        Specialized *objects* representing resources, contexts,
+        summary, or results are passed to the the :meth:`add` method.
+        Alternatively, objects can be added later manually.
+        If no *name* is given, the output prefix is set to the first
+        resource's name. If *name* is None, no prefix is set at all.
+        """
+        self.resources = []
+        self.contexts = Contexts()
+        self.summary = Summary()
+        self.results = Results()
+        self.perfdata = []
+        if name is not None:
+            self.name = name
+        else:
+            self.name = ""
+        self.add(*objects)
+
+    def add(self, *objects: Resource | Context | Summary | Results):
+        """Adds domain objects to a check.
+
+        :param objects: one or more objects that are descendants from
+            :class:`~mplugin.resource.Resource`,
+            :class:`~mplugin.context.Context`,
+            :class:`~mplugin.summary.Summary`, or
+            :class:`~mplugin.result.Results`.
+        """
+        for obj in objects:
+            if isinstance(obj, Resource):
+                self.resources.append(obj)
+                if self.name is None:  # type: ignore
+                    self.name = ""
+                elif self.name == "":
+                    self.name = self.resources[0].name
+            elif isinstance(obj, Context):
+                self.contexts.add(obj)
+            elif isinstance(obj, Summary):
+                self.summary = obj
+            elif isinstance(obj, Results):  # type: ignore
+                self.results = obj
+            else:
+                raise TypeError("cannot add type {0} to check".format(type(obj)), obj)
+        return self
+
+    def _evaluate_resource(self, resource: Resource) -> None:
+        metric = None
+        try:
+            metrics = resource.probe()
+            if not metrics:
+                _log.warning("resource %s did not produce any metric", resource.name)
+            if isinstance(metrics, Metric):
+                # resource returned a bare metric instead of list/generator
+                metrics = [metrics]
+            for metric in metrics:
+                context = self.contexts[metric.context]
+                metric = metric.replace(contextobj=context, resource=resource)
+                result = metric.evaluate()
+                if isinstance(result, Result):
+                    self.results.add(result)
+                elif isinstance(result, ServiceState):  # type: ignore
+                    self.results.add(Result(result, metric=metric))
+                else:
+                    raise ValueError(
+                        "evaluate() returned neither Result nor ServiceState object",
+                        metric.name,
+                        result,
+                    )
+                self.perfdata.append(str(metric.performance() or ""))
+        except CheckError as e:
+            self.results.add(Result(unknown, str(e), metric))
+
+    def __call__(self):
+        """Actually run the check.
+
+        After a check has been called, the :attr:`results` and
+        :attr:`perfdata` attributes are populated with the outcomes. In
+        most cases, you should not use __call__ directly but invoke
+        :meth:`main`, which delegates check execution to the
+        :class:`Runtime` environment.
+        """
+        for resource in self.resources:
+            self._evaluate_resource(resource)
+        self.perfdata = sorted([p for p in self.perfdata if p])
+
+    def main(self, verbose: Any = None, timeout: Any = None) -> NoReturn:
+        """All-in-one control delegation to the runtime environment.
+
+        Get a :class:`~mplugin.runtime.Runtime` instance and
+        perform all phases: run the check (via :meth:`__call__`), print
+        results and exit the program with an appropriate status code.
+
+        :param verbose: output verbosity level between 0 and 3
+        :param timeout: abort check execution with a :exc:`Timeout`
+            exception after so many seconds (use 0 for no timeout)
+        """
+        runtime = Runtime()
+        runtime.execute(self, verbose, timeout)
+
+    @property
+    def state(self) -> ServiceState:
+        """Overall check state.
+
+        The most significant (=worst) state seen in :attr:`results` to
+        far. :obj:`~mplugin.state.Unknown` if no results have been
+        collected yet. Corresponds with :attr:`exitcode`. Read-only
+        property.
+        """
+        try:
+            return self.results.most_significant_state
+        except ValueError:
+            return unknown
+
+    @property
+    def summary_str(self) -> str:
+        """Status line summary string.
+
+        The first line of output that summarizes that situation as
+        perceived by the check. The string is usually queried from a
+        :class:`Summary` object. Read-only property.
+        """
+        if not self.results:
+            return self.summary.empty() or ""
+
+        if self.state == ok:
+            return self.summary.ok(self.results) or ""
+
+        return self.summary.problem(self.results) or ""
+
+    @property
+    def verbose_str(self):
+        """Additional lines of output.
+
+        Long text output if check runs in verbose mode. Also queried
+        from :class:`~mplugin.summary.Summary`. Read-only property.
+        """
+        return self.summary.verbose(self.results) or ""
+
+    @property
+    def exitcode(self) -> int:
+        """Overall check exit code according to the Nagios API.
+
+        Corresponds with :attr:`state`. Read-only property.
+        """
+        try:
+            return int(self.results.most_significant_state)
+        except ValueError:
+            return 3

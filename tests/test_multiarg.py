@@ -1,4 +1,4 @@
-from mplugin.multiarg import MultiArg
+from mplugin import MultiArg
 
 
 class TestMultiarg:

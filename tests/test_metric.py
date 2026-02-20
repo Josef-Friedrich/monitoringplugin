@@ -1,7 +1,7 @@
 import pytest
 
 import mplugin
-from mplugin.metric import Metric
+from mplugin import Metric
 
 
 class TestMetric:

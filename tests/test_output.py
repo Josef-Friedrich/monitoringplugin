@@ -2,7 +2,7 @@ import io
 import logging
 
 import mplugin
-from mplugin.output import Output
+from mplugin import Output
 
 
 class FakeCheck:

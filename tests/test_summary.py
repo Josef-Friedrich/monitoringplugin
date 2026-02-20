@@ -1,5 +1,5 @@
 import mplugin
-from mplugin.summary import Summary
+from mplugin import Summary
 
 
 class TestSummary:
