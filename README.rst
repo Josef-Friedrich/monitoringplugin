@@ -8,8 +8,9 @@ This is a fork of the `nagiosplugin`_. Changes:
 - ``Ok`` renamed to ``ok`` etc ...
 - Export ``ServiceState``
 - Convert all namped tuples in classes (``Metric``, ``Performance``, ``ServiceState``)
-- Remove compat.py
-- Add helper methods ok(), warn(), critical(), unknown() in Context
+- Remove ``compat.py``
+- Add helper methods ``ok()``, ``warn()``, ``critical()``, ``unknown()`` in ``Context``
+- Add function ``setup_argparse``
 
 About
 -----

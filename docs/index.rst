@@ -13,8 +13,7 @@ Contents
    readme
    tutorial/index
    topic/index
-   api/index
-   hacking
+   api
    glossary
    history
 

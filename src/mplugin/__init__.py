@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import collections
 import functools
 import importlib
@@ -1850,3 +1851,82 @@ class Check:
             return int(self.results.most_significant_state)
         except ValueError:
             return 3
+
+
+class __CustomArgumentParser(argparse.ArgumentParser):
+    """To get --help and --version exit with 3"""
+
+    def exit(self, status: int = 3, message: Optional[str] = None) -> typing.NoReturn:
+        if message:
+            self._print_message(message, sys.stderr)
+        sys.exit(status)
+
+
+def setup_argparser(
+    name: Optional[str],
+    version: Optional[str] = None,
+    license: Optional[str] = None,
+    repository: Optional[str] = None,
+    copyright: Optional[str] = None,
+    description: Optional[str] = None,
+    epilog: Optional[str] = None,
+) -> argparse.ArgumentParser:
+    """
+    Set up and configure an argument parser for a monitoring plugin
+    according the
+    `Monitoring Plugin Guidelines
+    <https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/monitoring_plugins_interface/02.Input.md>`__.
+
+    This function creates a customized ArgumentParser instance with metadata
+    and formatting suitable for monitoring plugins. It automatically prefixes
+    the plugin name with ``check_`` if not already present.
+
+    :param name: The name of the plugin. If provided and doesn't start with
+        ``check``, it will be prefixed with ``check_``.
+    :param version: The version number of the plugin. If provided, it will be
+        included in the parser description.
+    :param license: The license type of the plugin. If provided, it will be
+        included in the parser description.
+    :param repository: The repository URL of the plugin. If provided, it will
+        be included in the parser description.
+    :param copyright: The copyright information for the plugin. If provided,
+        it will be included in the parser description.
+    :param description: A detailed description of the plugin's functionality.
+        If provided, it will be appended to the parser description after a
+        blank line.
+    :param epilog: Additional information to display after the help message.
+
+    :returns: A configured ArgumentParser instance with RawDescriptionHelpFormatter,
+        80 character width, and metadata assembled from the provided parameters.
+    """
+    description_lines: list[str] = []
+
+    if name is not None and not name.startswith("check"):
+        name = f"check_{name}"
+
+    if version is not None:
+        description_lines.append(f"version {version}")
+
+    if license is not None:
+        description_lines.append(f"Licensed under the {license}.")
+
+    if repository is not None:
+        description_lines.append(f"Repository: {repository}.")
+
+    if copyright is not None:
+        description_lines.append(copyright)
+
+    if description is not None:
+        description_lines.append("")
+        description_lines.append(description)
+
+    parser: argparse.ArgumentParser = __CustomArgumentParser(
+        prog=name,
+        formatter_class=lambda prog: argparse.RawDescriptionHelpFormatter(
+            prog, width=80
+        ),
+        description="\n".join(description_lines),
+        epilog=epilog,
+    )
+
+    return parser
