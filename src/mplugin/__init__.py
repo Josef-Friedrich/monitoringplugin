@@ -333,20 +333,17 @@ class MultiArg:
 # platform.py
 
 
-# Changing the badly-named `t` variable at this point is likely API-breaking,
-# so it will be left in place.
-# pylint: disable-next=invalid-name
-def with_timeout(t, func, *args: Any, **kwargs: Any) -> None:
+def with_timeout(time: int, func: Callable[P, R], *args: Any, **kwargs: Any) -> None:
     """Call `func` but terminate after `t` seconds."""
 
     if os.name == "posix":
         signal = importlib.import_module("signal")
 
-        def timeout_handler(signum, frame):
-            raise Timeout("{0}s".format(t))
+        def timeout_handler(signum: int, frame: Any) -> NoReturn:
+            raise Timeout("{0}s".format(time))
 
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(t)
+        signal.alarm(time)
         try:
             func(*args, **kwargs)
         finally:
@@ -359,12 +356,12 @@ def with_timeout(t, func, *args: Any, **kwargs: Any) -> None:
         func_thread = threading.Thread(target=func, args=args, kwargs=kwargs)
         func_thread.daemon = True  # quit interpreter even if still running
         func_thread.start()
-        func_thread.join(t)
+        func_thread.join(time)
         if func_thread.is_alive():
-            raise Timeout("{0}s".format(t))
+            raise Timeout("{0}s".format(time))
 
 
-def flock_exclusive(fileobj) -> None:
+def flock_exclusive(fileobj: io.TextIOWrapper) -> None:
     """Acquire exclusive lock for open file `fileobj`."""
 
     if os.name == "posix":

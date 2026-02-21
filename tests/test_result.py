@@ -1,6 +1,16 @@
 import pytest
 
-from mplugin import Metric, Result, Results, critical, ok, unknown, warn
+from mplugin import (
+    Context,
+    Metric,
+    Resource,
+    Result,
+    Results,
+    critical,
+    ok,
+    unknown,
+    warn,
+)
 
 
 class TestResult:
@@ -8,7 +18,7 @@ class TestResult:
         assert Result(ok).resource is None
 
     def test_metric_resorce(self) -> None:
-        res = object()
+        res = Resource()
         m = Metric("foo", 1, resource=res)
         assert Result(ok, metric=m).resource == res
 
@@ -16,7 +26,7 @@ class TestResult:
         assert Result(ok).context is None
 
     def test_metric_context(self) -> None:
-        ctx = object()
+        ctx = Context("test")
         m = Metric("foo", 1, contextobj=ctx)
         assert Result(ok, metric=m).context == ctx
 
@@ -97,4 +107,4 @@ class TestResults:
 
     def test_add_should_fail_unless_result_passed(self) -> None:
         with pytest.raises(ValueError):
-            Results(True)
+            Results(True)  # type: ignore

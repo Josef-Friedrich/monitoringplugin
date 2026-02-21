@@ -7,7 +7,7 @@ from mplugin import Runtime, Timeout, guarded, ok
 
 
 def make_check():
-    class Check(object):
+    class Check:
         summary_str = "summary"
         verbose_str = "long output"
         name = "check"
