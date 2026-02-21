@@ -1001,7 +1001,7 @@ class Metric:
         :param contextobj: reference to the associated context object
             (set automatically by :class:`~mplugin.check.Check`)
         :param resource: reference to the originating
-            :class:`~mplugin.resource.Resource` (set automatically
+            :class:`~mplugin.Resource` (set automatically
             by :class:`~mplugin.check.Check`)
         """
         self.name = name
@@ -1061,7 +1061,7 @@ class Metric:
     def evaluate(self) -> Union["Result", "ServiceState"]:
         """Evaluates this instance according to the context.
 
-        :return: :class:`~mplugin.result.Result` object
+        :return: :class:`~mplugin.Result` object
         :raise RuntimeError: if no context has been associated yet
         """
         if not self.contextobj:
@@ -1121,9 +1121,9 @@ class Resource:
         This is the only method called by the check controller.
         It should trigger all necessary actions and create metrics.
 
-        :return: list of :class:`~mplugin.metric.Metric` objects,
-            or generator that emits :class:`~mplugin.metric.Metric`
-            objects, or single :class:`~mplugin.metric.Metric`
+        :return: list of :class:`~mplugin.Metric` objects,
+            or generator that emits :class:`~mplugin.Metric`
+            objects, or single :class:`~mplugin.Metric`
             object
         """
         return []
@@ -1147,7 +1147,7 @@ class Result:
     """Evaluation outcome consisting of state and explanation.
 
     A Result object is typically emitted by a
-    :class:`~mplugin.context.Context` object and represents the
+    :class:`~mplugin.Context` object and represents the
     outcome of an evaluation. It contains a
     :class:`~mplugin.state.ServiceState` as well as an explanation.
     Plugin authors may subclass Result to implement specific features.
@@ -1370,7 +1370,7 @@ class Summary:
         The default implementation returns a string representation of
         the first result.
 
-        :param results: :class:`~mplugin.result.Results` container
+        :param results: :class:`~mplugin.Results` container
         :returns: status line
         """
         return "{0}".format(results[0])
@@ -1463,13 +1463,13 @@ class Context:
         """Creates generic context identified by `name`.
 
         Generic contexts just format associated metrics and evaluate
-        always to :obj:`~mplugin.state.Ok`. Metric formatting is
+        always to :obj:`~mplugin.ok`. Metric formatting is
         controlled with the :attr:`fmt_metric` attribute. It can either
         be a string or a callable. See the :meth:`describe` method for
         how formatting is done.
 
-        :param name: context name that is matched by the context
-            attribute of :class:`~mplugin.metric.Metric`
+        :param name: A context name that is matched by the context
+            attribute of :class:`~mplugin.Metric`
         :param fmt_metric: string or callable to convert
             context and associated metric to a human readable string
         :param result_cls: use this class (usually a
@@ -1485,7 +1485,7 @@ class Context:
     ) -> Union[Result, ServiceState]:
         """Determines state of a given metric.
 
-        This base implementation returns :class:`~mplugin.state.Ok`
+        This base implementation returns :class:`~mplugin.ok`
         in all cases. Plugin authors may override this method in
         subclasses to specialize behaviour.
 
@@ -1590,9 +1590,9 @@ class ScalarContext(Context):
         are described in the :class:`Context` base class.
 
         :param warning: Warning threshold as
-            :class:`~mplugin.range.Range` object or range string.
+            :class:`~mplugin.Range` object or range string.
         :param critical: Critical threshold as
-            :class:`~mplugin.range.Range` object or range string.
+            :class:`~mplugin.Range` object or range string.
         """
         super(ScalarContext, self).__init__(name, fmt_metric, result_cls)
         self.warn_range = Range(warning)
@@ -1609,7 +1609,7 @@ class ScalarContext(Context):
 
         :param metric: metric that is to be evaluated
         :param resource: not used
-        :returns: :class:`~mplugin.result.Result` object
+        :returns: :class:`~mplugin.Result` object
         """
         if not self.critical_range.match(metric.value):
             return self.result_cls(critical, self.critical_range.violation, metric)
@@ -1725,10 +1725,10 @@ class Check:
         """Adds domain objects to a check.
 
         :param objects: one or more objects that are descendants from
-            :class:`~mplugin.resource.Resource`,
-            :class:`~mplugin.context.Context`,
-            :class:`~mplugin.summary.Summary`, or
-            :class:`~mplugin.result.Results`.
+            :class:`~mplugin.Resource`,
+            :class:`~mplugin.Context`,
+            :class:`~mplugin.Summary`, or
+            :class:`~mplugin.Results`.
         """
         for obj in objects:
             if isinstance(obj, Resource):
@@ -1806,7 +1806,7 @@ class Check:
         """Overall check state.
 
         The most significant (=worst) state seen in :attr:`results` to
-        far. :obj:`~mplugin.state.Unknown` if no results have been
+        far. :obj:`~mplugin.unknown` if no results have been
         collected yet. Corresponds with :attr:`exitcode`. Read-only
         property.
         """
@@ -1836,7 +1836,7 @@ class Check:
         """Additional lines of output.
 
         Long text output if check runs in verbose mode. Also queried
-        from :class:`~mplugin.summary.Summary`. Read-only property.
+        from :class:`~mplugin.Summary`. Read-only property.
         """
         return self.summary.verbose(self.results) or ""
 
