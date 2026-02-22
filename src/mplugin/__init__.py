@@ -15,23 +15,11 @@ import traceback
 import typing
 from collections import UserDict
 from importlib import metadata
-from io import BufferedIOBase, StringIO
 from logging import StreamHandler
 from tempfile import TemporaryFile
 from types import TracebackType
-from typing import (
-    Any,
-    Callable,
-    Iterator,
-    NoReturn,
-    Optional,
-    ParamSpec,
-    TypedDict,
-    TypeVar,
-    Union,
-)
 
-from typing_extensions import Self, Unpack
+import typing_extensions
 
 __version__: str = metadata.version("mplugin")
 
@@ -107,14 +95,14 @@ class ServiceState:
         """Plugin API compliant exit code."""
         return self.code
 
-    def __gt__(self, other: Any) -> bool:
+    def __gt__(self, other: typing.Any) -> bool:
         return (
             hasattr(other, "code")
             and isinstance(other.code, int)
             and self.code > other.code
         )
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: typing.Any) -> bool:
         return (
             hasattr(other, "code")
             and isinstance(other.code, int)
@@ -165,7 +153,7 @@ unknown = Unknown()
 # range.py
 
 
-RangeSpec = Union[str, int, float, "Range"]
+RangeSpec = typing.Union[str, int, float, "Range"]
 
 
 class Range:
@@ -187,7 +175,7 @@ class Range:
 
     end: float
 
-    def __init__(self, spec: Optional[RangeSpec] = None) -> None:
+    def __init__(self, spec: typing.Optional[RangeSpec] = None) -> None:
         """Creates a Range object according to `spec`.
 
         :param spec: may be either a string, a float, or another
@@ -298,12 +286,12 @@ class Range:
 
 class MultiArg:
     args: list[str]
-    fill: Optional[str]
+    fill: typing.Optional[str]
 
     def __init__(
         self,
-        args: Union[list[str], str],
-        fill: Optional[str] = None,
+        args: typing.Union[list[str], str],
+        fill: typing.Optional[str] = None,
         splitchar: str = ",",
     ) -> None:
         if isinstance(args, list):
@@ -315,10 +303,10 @@ class MultiArg:
     def __len__(self) -> int:
         return self.args.__len__()
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> typing.Iterator[str]:
         return self.args.__iter__()
 
-    def __getitem__(self, key: int) -> Optional[str]:
+    def __getitem__(self, key: int) -> typing.Optional[str]:
         try:
             return self.args.__getitem__(key)
         except IndexError:
@@ -334,13 +322,15 @@ class MultiArg:
 # platform.py
 
 
-def with_timeout(time: int, func: Callable[P, R], *args: Any, **kwargs: Any) -> None:
+def with_timeout(
+    time: int, func: typing.Callable[P, R], *args: typing.Any, **kwargs: typing.Any
+) -> None:
     """Call `func` but terminate after `t` seconds."""
 
     if os.name == "posix":
         signal = importlib.import_module("signal")
 
-        def timeout_handler(signum: int, frame: Any) -> NoReturn:
+        def timeout_handler(signum: int, frame: typing.Any) -> typing.NoReturn:
             raise Timeout("{0}s".format(time))
 
         signal.signal(signal.SIGALRM, timeout_handler)
@@ -393,10 +383,10 @@ context manager to get it opened and committed automatically.
 """
 
 
-class Cookie(UserDict[str, Any]):
-    path: Optional[str]
+class Cookie(UserDict[str, typing.Any]):
+    path: typing.Optional[str]
 
-    def __init__(self, statefile: Optional[str] = None) -> None:
+    def __init__(self, statefile: typing.Optional[str] = None) -> None:
         """Creates a persistent dict to keep state.
 
         After creation, a cookie behaves like a normal dict.
@@ -413,7 +403,7 @@ class Cookie(UserDict[str, Any]):
         self.path = statefile
         self.fobj = None
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> typing_extensions.Self:
         """Allows Cookie to be used as context manager.
 
         Opens the file and passes a dict-like object into the
@@ -471,7 +461,7 @@ class Cookie(UserDict[str, Any]):
         except IOError:
             return open(self.path, "w+", encoding="ascii")
 
-    def _load(self) -> dict[str, Any]:
+    def _load(self) -> dict[str, typing.Any]:
         if not self.fobj:
             raise RuntimeError("file object is none")
         self.fobj.seek(0)
@@ -480,7 +470,7 @@ class Cookie(UserDict[str, Any]):
             raise ValueError(
                 "format error: cookie does not contain dict", self.path, data
             )
-        return typing.cast(dict[str, Any], data)
+        return typing.cast(dict[str, typing.Any], data)
 
     def close(self) -> None:
         """Closes a cookie and its underlying state file.
@@ -527,7 +517,7 @@ class LogTail:
 
     path: str
     cookie: "Cookie"
-    logfile: typing.Optional[BufferedIOBase] = None
+    logfile: typing.Optional[io.BufferedIOBase] = None
     stat: typing.Optional[os.stat_result]
 
     def __init__(self, path: str, cookie: "Cookie") -> None:
@@ -600,14 +590,14 @@ def filter_output(output: str, filtered: str) -> str:
 class Output:
     ILLEGAL = "|"
 
-    logchan: StreamHandler[StringIO]
+    logchan: StreamHandler[io.StringIO]
     verbose: int
     status: str
     out: list[str]
     warnings: list[str]
     longperfdata: list[str]
 
-    def __init__(self, logchan: StreamHandler[StringIO], verbose: int = 0) -> None:
+    def __init__(self, logchan: StreamHandler[io.StringIO], verbose: int = 0) -> None:
         self.logchan = logchan
         self.verbose = verbose
         self.status = ""
@@ -711,22 +701,22 @@ class Performance:
     label: str
     """short identifier, results in graph titles for example (20 chars or less recommended)"""
 
-    value: Any
+    value: typing.Any
     """measured value (usually an int, float, or bool)"""
 
-    uom: Optional[str]
+    uom: typing.Optional[str]
     """unit of measure -- use base units whereever possible"""
 
-    warn: Optional["RangeSpec"]
+    warn: typing.Optional["RangeSpec"]
     """warning range"""
 
-    crit: Optional["RangeSpec"]
+    crit: typing.Optional["RangeSpec"]
     """critical range"""
 
-    min: Optional[float]
+    min: typing.Optional[float]
     """known value minimum (None for no minimum)"""
 
-    max: Optional[float]
+    max: typing.Optional[float]
     """known value maximum (None for no maximum)"""
 
     # Changing these now would be API-breaking, so we'll ignore these
@@ -735,12 +725,12 @@ class Performance:
     def __init__(
         self,
         label: str,
-        value: Any,
-        uom: Optional[str] = None,
-        warn: Optional["RangeSpec"] = None,
-        crit: Optional["RangeSpec"] = None,
-        min: Optional[float] = None,
-        max: Optional[float] = None,
+        value: typing.Any,
+        uom: typing.Optional[str] = None,
+        warn: typing.Optional["RangeSpec"] = None,
+        crit: typing.Optional["RangeSpec"] = None,
+        min: typing.Optional[float] = None,
+        max: typing.Optional[float] = None,
     ) -> None:
         """Create new performance data object.
 
@@ -800,13 +790,14 @@ timeouts and logging. Plugin authors should not use Runtime directly,
 but decorate the plugin's main function with :func:`~.runtime.guarded`.
 """
 
-P = ParamSpec("P")
-R = TypeVar("R")
+P = typing.ParamSpec("P")
+R = typing.TypeVar("R")
 
 
 def guarded(
-    original_function: Optional[Callable[P, R]] = None, verbose: Optional[int] = None
-) -> Callable[P, R]:
+    original_function: typing.Optional[typing.Callable[P, R]] = None,
+    verbose: typing.Optional[int] = None,
+) -> typing.Callable[P, R]:
     """Runs a function mplugin's Runtime environment.
 
     `guarded` makes the decorated function behave correctly with respect
@@ -823,13 +814,13 @@ def guarded(
         use `@guarded(verbose=0)` to turn tracebacks in that phase off.
     """
 
-    def _decorate(func: Callable[P, R]):
+    def _decorate(func: typing.Callable[P, R]):
         @functools.wraps(func)
         # This inconsistent-return-statements error can be fixed by adding a
-        # NoReturn type hint to Runtime._handle_exception(), but we can't do
+        # typing.NoReturn type hint to Runtime._handle_exception(), but we can't do
         # that as long as we're maintaining py27 compatability.
         # pylint: disable-next=inconsistent-return-statements
-        def wrapper(*args: Any, **kwds: Any):
+        def wrapper(*args: typing.Any, **kwds: typing.Any):
             runtime = Runtime()
             if verbose is not None:
                 runtime.verbose = verbose
@@ -856,15 +847,15 @@ def guarded(
 
 class Runtime:
     instance = None
-    check: Optional["Check"] = None
+    check: typing.Optional["Check"] = None
     _verbose = 1
-    timeout: Optional[int] = None
+    timeout: typing.Optional[int] = None
     logchan: logging.StreamHandler[io.StringIO]
     output: Output
     stdout = None
     exitcode: int = 70  # EX_SOFTWARE
 
-    def __new__(cls) -> Self:
+    def __new__(cls) -> typing_extensions.Self:
         if not cls.instance:
             cls.instance = super(Runtime, cls).__new__(cls)
         return cls.instance
@@ -877,7 +868,9 @@ class Runtime:
         rootlogger.addHandler(self.logchan)
         self.output = Output(self.logchan)
 
-    def _handle_exception(self, statusline: Optional[str] = None) -> NoReturn:
+    def _handle_exception(
+        self, statusline: typing.Optional[str] = None
+    ) -> typing.NoReturn:
         exc_type, value = sys.exc_info()[0:2]
         name = self.check.name.upper() + " " if self.check else ""
         self.output.status = "{0}UNKNOWN: {1}".format(
@@ -895,7 +888,7 @@ class Runtime:
         return self._verbose
 
     @verbose.setter
-    def verbose(self, verbose: Any) -> None:
+    def verbose(self, verbose: typing.Any) -> None:
         if isinstance(verbose, int):
             self._verbose = verbose
         elif isinstance(verbose, float):
@@ -917,8 +910,8 @@ class Runtime:
         self.exitcode = check.exitcode
 
     def execute(
-        self, check: "Check", verbose: Any = None, timeout: Any = None
-    ) -> NoReturn:
+        self, check: "Check", verbose: typing.Any = None, timeout: typing.Any = None
+    ) -> typing.NoReturn:
         self.check = check
         if verbose is not None:
             self.verbose = verbose
@@ -931,7 +924,7 @@ class Runtime:
         print("{0}".format(self.output), end="", file=self.stdout)
         self.sysexit()
 
-    def sysexit(self) -> NoReturn:
+    def sysexit(self) -> typing.NoReturn:
         sys.exit(self.exitcode)
 
 
@@ -946,9 +939,9 @@ as result of their :meth:`~.resource.Resource.probe` methods.
 """
 
 
-class MetricKwargs(TypedDict, total=False):
+class MetricKwargs(typing.TypedDict, total=False):
     name: str
-    value: Any
+    value: typing.Any
     uom: str
     min: float
     max: float
@@ -965,13 +958,13 @@ class Metric:
     """
 
     name: str
-    value: Any
-    uom: Optional[str] = None
-    min: Optional[float] = None
-    max: Optional[float] = None
+    value: typing.Any
+    uom: typing.Optional[str] = None
+    min: typing.Optional[float] = None
+    max: typing.Optional[float] = None
     context: str
-    contextobj: Optional["Context"] = None
-    resource: Optional["Resource"] = None
+    contextobj: typing.Optional["Context"] = None
+    resource: typing.Optional["Resource"] = None
 
     # Changing these now would be API-breaking, so we'll ignore these
     # shadowed built-ins
@@ -979,13 +972,13 @@ class Metric:
     def __init__(
         self,
         name: str,
-        value: Any,
-        uom: Optional[str] = None,
-        min: Optional[float] = None,
-        max: Optional[float] = None,
-        context: Optional[str] = None,
-        contextobj: Optional["Context"] = None,
-        resource: Optional["Resource"] = None,
+        value: typing.Any,
+        uom: typing.Optional[str] = None,
+        min: typing.Optional[float] = None,
+        max: typing.Optional[float] = None,
+        context: typing.Optional[str] = None,
+        contextobj: typing.Optional["Context"] = None,
+        resource: typing.Optional["Resource"] = None,
     ) -> None:
         """Creates new Metric instance.
 
@@ -1021,7 +1014,9 @@ class Metric:
         """Same as :attr:`valueunit`."""
         return self.valueunit
 
-    def replace(self, **attr: Unpack[MetricKwargs]) -> Self:
+    def replace(
+        self, **attr: typing_extensions.Unpack[MetricKwargs]
+    ) -> typing_extensions.Self:
         """Creates new instance with updated attributes."""
         for key, value in attr.items():
             setattr(self, key, value)
@@ -1059,7 +1054,7 @@ class Metric:
             return "%.4g" % self.value
         return str(self.value)
 
-    def evaluate(self) -> Union["Result", "ServiceState"]:
+    def evaluate(self) -> typing.Union["Result", "ServiceState"]:
         """Evaluates this instance according to the context.
 
         :return: :class:`~mplugin.Result` object
@@ -1071,7 +1066,7 @@ class Metric:
             raise RuntimeError("no resource set for metric", self.name)
         return self.contextobj.evaluate(self, self.resource)
 
-    def performance(self) -> Optional[Performance]:
+    def performance(self) -> typing.Optional[Performance]:
         """Generates performance data according to the context.
 
         :return: :class:`~mplugin.performance.Performance` object
@@ -1116,7 +1111,7 @@ class Resource:
     # pylint: disable=no-self-use
     def probe(
         self,
-    ) -> Union[list["Metric"], "Metric", typing.Generator["Metric", None, None]]:
+    ) -> typing.Union[list["Metric"], "Metric", typing.Generator["Metric", None, None]]:
         """Query system state and return metrics.
 
         This is the only method called by the check controller.
@@ -1156,15 +1151,15 @@ class Result:
 
     state: "ServiceState"
 
-    hint: Optional[str]
+    hint: typing.Optional[str]
 
-    metric: Optional["Metric"]
+    metric: typing.Optional["Metric"]
 
     def __init__(
         self,
         state: "ServiceState",
-        hint: Optional[str] = None,
-        metric: Optional["Metric"] = None,
+        hint: typing.Optional[str] = None,
+        metric: typing.Optional["Metric"] = None,
     ) -> None:
         self.state = state
         self.hint = hint
@@ -1195,14 +1190,14 @@ class Result:
         return ""
 
     @property
-    def resource(self) -> Optional["Resource"]:
+    def resource(self) -> typing.Optional["Resource"]:
         """Reference to the resource used to generate this result."""
         if not self.metric:
             return None
         return self.metric.resource
 
     @property
-    def context(self) -> Optional["Context"]:
+    def context(self) -> typing.Optional["Context"]:
         """Reference to the metric used to generate this result."""
         if not self.metric:
             return None
@@ -1278,7 +1273,7 @@ class Results:
         """Number of results in this container."""
         return len(self.results)
 
-    def __getitem__(self, item: Union[int, str]) -> Result:
+    def __getitem__(self, item: typing.Union[int, str]) -> Result:
         """Access result by index or name.
 
         If *item* is an integer, the itemth element in the
@@ -1447,18 +1442,18 @@ evaluation or performance data logic.
 """
 
 
-FmtMetric = str | Callable[["Metric", "Context"], str]
+FmtMetric = str | typing.Callable[["Metric", "Context"], str]
 
 
 class Context:
     name: str
-    fmt_metric: Optional[FmtMetric]
+    fmt_metric: typing.Optional[FmtMetric]
     result_cls: type[Result]
 
     def __init__(
         self,
         name: str,
-        fmt_metric: Optional[FmtMetric] = None,
+        fmt_metric: typing.Optional[FmtMetric] = None,
         result_cls: type[Result] = Result,
     ) -> None:
         """Creates generic context identified by `name`.
@@ -1483,7 +1478,7 @@ class Context:
 
     def evaluate(
         self, metric: "Metric", resource: "Resource"
-    ) -> Union[Result, ServiceState]:
+    ) -> typing.Union[Result, ServiceState]:
         """Determines state of a given metric.
 
         This base implementation returns :class:`~mplugin.ok`
@@ -1499,22 +1494,30 @@ class Context:
         return self.result_cls(ok, metric=metric)
 
     def ok(
-        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+        self,
+        hint: typing.Optional[str] = None,
+        metric: typing.Optional["Metric"] = None,
     ) -> Result:
         return Result(ok, hint=hint, metric=metric)
 
     def warn(
-        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+        self,
+        hint: typing.Optional[str] = None,
+        metric: typing.Optional["Metric"] = None,
     ) -> Result:
         return Result(warn, hint=hint, metric=metric)
 
     def critical(
-        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+        self,
+        hint: typing.Optional[str] = None,
+        metric: typing.Optional["Metric"] = None,
     ) -> Result:
         return Result(critical, hint=hint, metric=metric)
 
     def unknown(
-        self, hint: Optional[str] = None, metric: Optional["Metric"] = None
+        self,
+        hint: typing.Optional[str] = None,
+        metric: typing.Optional["Metric"] = None,
     ) -> Result:
         return Result(unknown, hint=hint, metric=metric)
 
@@ -1523,7 +1526,7 @@ class Context:
     # pylint: disable-next=no-self-use
     def performance(
         self, metric: "Metric", resource: "Resource"
-    ) -> Optional[Performance]:
+    ) -> typing.Optional[Performance]:
         """Derives performance data from a given metric.
 
         This base implementation just returns none. Plugin authors may
@@ -1537,7 +1540,7 @@ class Context:
         """
         return None
 
-    def describe(self, metric: "Metric") -> Optional[str]:
+    def describe(self, metric: "Metric") -> typing.Optional[str]:
         """Provides human-readable metric description.
 
         Formats the metric according to the :attr:`fmt_metric`
@@ -1577,8 +1580,8 @@ class ScalarContext(Context):
     def __init__(
         self,
         name: str,
-        warning: Optional[RangeSpec] = None,
-        critical: Optional[RangeSpec] = None,
+        warning: typing.Optional[RangeSpec] = None,
+        critical: typing.Optional[RangeSpec] = None,
         fmt_metric: FmtMetric = "{name} is {valueunit}",
         result_cls: type[Result] = Result,
     ) -> None:
@@ -1701,7 +1704,7 @@ class Check:
     def __init__(
         self,
         *objects: Resource | Context | Summary | Results,
-        name: Optional[str] = None,
+        name: typing.Optional[str] = None,
     ) -> None:
         """Creates and configures a check.
 
@@ -1788,7 +1791,9 @@ class Check:
             self._evaluate_resource(resource)
         self.perfdata = sorted([p for p in self.perfdata if p])
 
-    def main(self, verbose: Any = None, timeout: Any = None) -> NoReturn:
+    def main(
+        self, verbose: typing.Any = None, timeout: typing.Any = None
+    ) -> typing.NoReturn:
         """All-in-one control delegation to the runtime environment.
 
         Get a :class:`~mplugin.runtime.Runtime` instance and
@@ -1856,20 +1861,22 @@ class Check:
 class __CustomArgumentParser(argparse.ArgumentParser):
     """To get --help and --version exit with 3"""
 
-    def exit(self, status: int = 3, message: Optional[str] = None) -> typing.NoReturn:
+    def exit(
+        self, status: int = 3, message: typing.Optional[str] = None
+    ) -> typing.NoReturn:
         if message:
             self._print_message(message, sys.stderr)
         sys.exit(status)
 
 
 def setup_argparser(
-    name: Optional[str],
-    version: Optional[str] = None,
-    license: Optional[str] = None,
-    repository: Optional[str] = None,
-    copyright: Optional[str] = None,
-    description: Optional[str] = None,
-    epilog: Optional[str] = None,
+    name: typing.Optional[str],
+    version: typing.Optional[str] = None,
+    license: typing.Optional[str] = None,
+    repository: typing.Optional[str] = None,
+    copyright: typing.Optional[str] = None,
+    description: typing.Optional[str] = None,
+    epilog: typing.Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
     Set up and configure an argument parser for a monitoring plugin

@@ -5,6 +5,7 @@ from mplugin import (
     CheckError,
     Context,
     Metric,
+    Ok,
     Resource,
     Result,
     Results,
@@ -59,7 +60,7 @@ class TestCheck:
 
     def test_check_should_accept_resource_returning_bare_metric(self) -> None:
         class R_ReturnsBareMetric(Resource):
-            def probe(self):
+            def probe(self) -> Metric:
                 return Metric("foo", 0, context="default")
 
         res = R_ReturnsBareMetric()
@@ -111,11 +112,11 @@ class TestCheck:
         metric = Metric("m5", 0)
 
         class R5_DefaultMetric(Resource):
-            def probe(self):
+            def probe(self) -> list[Metric]:
                 return [metric]
 
         class BareStateContext(Context):
-            def evaluate(self, metric, resource):
+            def evaluate(self, metric, resource) -> Ok:
                 return ok
 
         c = Check(R5_DefaultMetric(), BareStateContext("m5"))
@@ -135,7 +136,7 @@ class TestCheck:
 
     def test_utf8(self) -> None:
         class UTF8(Resource):
-            def probe(self):
+            def probe(self) -> Metric:
                 return Metric("utf8", 8, context="utf8")
 
         c = Check(
