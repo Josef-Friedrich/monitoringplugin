@@ -151,6 +151,28 @@ class __Unknown(ServiceState):
 
 unknown = __Unknown()
 
+
+def state(exit_code: int) -> ServiceState:
+    """
+    Convert an exit code to a ServiceState.
+
+    :param exit_code: The exit code to convert. Must be 0, 1, 2, or 3.
+
+    :return: The corresponding ServiceState (ok, warn, critical, or unknown).
+
+    :raises CheckError: If exit_code is greater than 3.
+    """
+    if exit_code == 0:
+        return ok
+    elif exit_code == 1:
+        return warn
+    elif exit_code == 2:
+        return critical
+    elif exit_code == 3:
+        return unknown
+    raise CheckError(f"Exit code {exit_code} is > 3")
+
+
 # range.py
 
 
