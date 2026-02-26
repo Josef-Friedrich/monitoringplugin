@@ -2047,3 +2047,78 @@ def setup_argparser(
         )
 
     return parser
+
+
+def convert_timespan_to_seconds(timespan: typing.Union[str, int, float]) -> float:
+    """Convert a timespan format string to seconds.
+    If no time unit is specified, generally seconds are assumed.
+
+    The following time units are understood:
+
+    - usec, us, μs
+    - msec, ms
+    - seconds, second, sec, s
+    - minutes, minute, min, m
+    - hours, hour, hr, h
+    - days, day, d
+    - weeks, week, w
+    - months, month, M (defined as 30.44 days)
+    - years, year, y (defined as 365.25 days)
+
+    :param timespan: for example ``2.345s`` or ``3min 45.234s`` or
+      ``34min`` or ``2 months 8 days``
+
+    :return: The timespan in seconds
+    """
+
+    # A int or a float encoded as string without an extension
+    try:
+        timespan = float(timespan)
+    except ValueError:
+        pass
+
+    if isinstance(timespan, int) or isinstance(timespan, float):
+        return timespan
+
+    # Remove all whitespaces
+    timespan = re.sub(r"\s+", "", timespan)
+
+    replacements: list[tuple[list[str], str]] = [
+        (["years", "year"], "y"),
+        (["months", "month"], "M"),
+        (["weeks", "week"], "w"),
+        (["days", "day"], "d"),
+        (["hours", "hour", "hr"], "h"),
+        (["minutes", "minute", "min"], "m"),
+        (["seconds", "second", "sec"], "s"),
+        (["msec"], "ms"),
+        (["usec", "μs", "μ"], "us"),
+    ]
+
+    for replacement in replacements:
+        for r in replacement[0]:
+            timespan = timespan.replace(r, replacement[1])
+
+    # Add a whitespace after the units
+    timespan = re.sub(r"([a-zA-Z]+)", r"\1 ", timespan)
+
+    seconds: dict[str, float] = {
+        "y": 31557600,  # 365.25 days
+        "M": 2630016,  # 30.44 days
+        "w": 604800,  # 7 * 24 * 60 * 60
+        "d": 86400,  # 24 * 60 * 60
+        "h": 3600,  # 60 * 60
+        "m": 60,
+        "s": 1,
+        "ms": 0.001,
+        "us": 0.000001,
+    }
+    result: float = 0
+    # Split on the whitespaces
+    for span in timespan.split():
+        match = re.search(r"([\d\.]+)([a-zA-Z]+)", span)
+        if match:
+            value = match.group(1)
+            unit = match.group(2)
+            result += float(value) * seconds[unit]
+    return result
