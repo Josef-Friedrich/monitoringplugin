@@ -8,12 +8,11 @@ from mplugin import ServiceState, state
 
 
 class MockResult:
-    """A class to collect all results of a mocked execution of the main
-    function."""
+    """A class to collect the result of a mocked execution."""
 
     __sys_exit: Mock
-    __stdout: typing.Optional[str]
-    __stderr: typing.Optional[str]
+    __stdout: typing.Optional[str] = None
+    __stderr: typing.Optional[str] = None
 
     def __init__(
         self,
@@ -31,7 +30,7 @@ class MockResult:
         if stderr is not None:
             err = stderr.getvalue()
             if err != "":
-                self.__stdout = err
+                self.__stderr = err
 
     @property
     def exitcode(self) -> int:
@@ -44,26 +43,18 @@ class MockResult:
 
     @property
     def stdout(self) -> typing.Optional[str]:
-        """The function ``redirect_stdout()`` is used to capture the ``stdout``
-        output."""
         if self.__stdout:
             return self.__stdout
         return None
 
     @property
     def stderr(self) -> typing.Optional[str]:
-        """The function ``redirect_stderr()`` is used to capture the ``stderr``
-        output."""
         if self.__stderr:
             return self.__stderr
         return None
 
     @property
     def output(self) -> str:
-        """A combined string of the captured stderr, stdout  and the print
-        calls. Somehow the whole stdout couldn’t be read. The help text could
-        be read, but not the plugin output using the function
-        ``redirect_stdout()``."""
         out: str = ""
 
         if self.__stderr:
