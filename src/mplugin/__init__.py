@@ -2122,3 +2122,51 @@ def convert_timespan_to_seconds(timespan: typing.Union[str, int, float]) -> floa
             unit = match.group(2)
             result += float(value) * seconds[unit]
     return result
+
+
+class TimespanAction(argparse.Action):
+    """
+    Custom argparse action for converting timespan strings to seconds.
+
+    This action allows command-line arguments to accept human-readable timespan
+    formats (e.g., "1d", "2h", "30m", "45s") and automatically converts them to
+    their equivalent duration in seconds.
+
+    :raises ValueError: If nargs is specified during initialization, as this action
+                        does not support multiple values.
+    :raises ValueError: If the provided value is not a string during parsing.
+
+    Example usage:
+
+    .. code-block:: python
+
+        parser.add_argument(
+            "-c",
+            "--critical",
+            default=5356800,
+            help="Interval in seconds for critical state.",
+            action=TimeSpanAction,
+        )
+    """
+
+    def __init__(
+        self,
+        option_strings: list[str],
+        dest: str,
+        nargs: typing.Optional[str] = None,
+        **kwargs: typing.Any,
+    ) -> None:
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super().__init__(option_strings, dest, **kwargs)
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: typing.Optional[typing.Union[str, typing.Sequence[typing.Any]]],
+        option_string: typing.Optional[str] = None,
+    ) -> None:
+        if not isinstance(values, str):
+            raise ValueError("Only strings are allowed")
+        setattr(namespace, self.dest, convert_timespan_to_seconds(values))
