@@ -1266,7 +1266,7 @@ class Result:
         )
 
 
-class _Results:
+class Results:
     """Container for result sets.
 
     Basically, this class manages a set of results and provides
@@ -1413,7 +1413,7 @@ class Summary:
     # should probably be an @abstractmethod.
     # See issue #44
     # pylint: disable-next=no-self-use
-    def ok(self, results: "_Results") -> str:
+    def ok(self, results: "Results") -> str:
         """Formats status line when overall state is ok.
 
         The default implementation returns a string representation of
@@ -1430,7 +1430,7 @@ class Summary:
     # should probably be an @abstractmethod.
     # See issue #44
     # pylint: disable-next=no-self-use
-    def problem(self, results: "_Results") -> str:
+    def problem(self, results: "Results") -> str:
         """Formats status line when overall state is not ok.
 
         The default implementation returns a string representation of te
@@ -1448,7 +1448,7 @@ class Summary:
     # should probably be an @abstractmethod.
     # See issue #44
     # pylint: disable-next=no-self-use
-    def verbose(self, results: "_Results") -> list[str]:
+    def verbose(self, results: "Results") -> list[str]:
         """Provides extra lines if verbose plugin execution is requested.
 
         The default implementation returns a list of all resources that are in
@@ -1794,13 +1794,13 @@ class Check:
     resources: list[Resource]
     contexts: _Contexts
     summary: Summary
-    results: _Results
+    results: Results
     perfdata: list[str]
     name: str
 
     def __init__(
         self,
-        *objects: Resource | Context | Summary | _Results,
+        *objects: Resource | Context | Summary | Results,
         name: typing.Optional[str] = None,
     ) -> None:
         """Creates and configures a check.
@@ -1814,7 +1814,7 @@ class Check:
         self.resources = []
         self.contexts = _Contexts()
         self.summary = Summary()
-        self.results = _Results()
+        self.results = Results()
         self.perfdata = []
         if name is not None:
             self.name = name
@@ -1822,7 +1822,7 @@ class Check:
             self.name = ""
         self.add(*objects)
 
-    def add(self, *objects: Resource | Context | Summary | _Results):
+    def add(self, *objects: Resource | Context | Summary | Results):
         """Adds domain objects to a check.
 
         :param objects: one or more objects that are descendants from
@@ -1842,7 +1842,7 @@ class Check:
                 self.contexts.add(obj)
             elif isinstance(obj, Summary):
                 self.summary = obj
-            elif isinstance(obj, _Results):  # type: ignore
+            elif isinstance(obj, Results):  # type: ignore
                 self.results = obj
             else:
                 raise TypeError("cannot add type {0} to check".format(type(obj)), obj)

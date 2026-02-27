@@ -7,10 +7,10 @@ from mplugin import (
     Metric,
     Resource,
     Result,
+    Results,
     ScalarContext,
     ServiceState,
     Summary,
-    _Results,
     _Runtime,  # type: ignore
     critical,
     ok,
@@ -50,7 +50,7 @@ class TestCheck:
         assert s == c.summary
 
     def test_add_results(self) -> None:
-        r = _Results()
+        r = Results()
         c = Check(r)
         assert r == c.results
 

@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import io
+import os
+import subprocess
 import typing
+from pathlib import Path
 from unittest.mock import Mock
 
 from mplugin import ServiceState, state
-
-import os
-import subprocess
-from pathlib import Path
-
 
 
 class MockResult:
