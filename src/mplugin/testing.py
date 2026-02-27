@@ -6,6 +6,11 @@ from unittest.mock import Mock
 
 from mplugin import ServiceState, state
 
+import os
+import subprocess
+from pathlib import Path
+
+
 
 class MockResult:
     """A class to collect the result of a mocked execution."""
@@ -73,3 +78,21 @@ class MockResult:
         if self.output:
             return self.output.split("\n", 1)[0]
         return None
+
+
+def run_with_bin(args: list[str], bin_dir: Path) -> subprocess.CompletedProcess[str]:
+    """
+    Run a command with a modified PATH environment variable.
+
+    Prepends the specified binary directory to the PATH environment variable
+    before running the subprocess, allowing executables in that directory to
+    be found first during command resolution.
+
+    :param args: List of command arguments to execute
+    :param bin_dir: Directory to prepend to the PATH environment variable
+    :return: Completed process object with stdout and stderr as strings
+    """
+
+    env: dict[str, str] = os.environ.copy()
+    env["PATH"] = str(bin_dir) + ":" + env["PATH"]
+    return subprocess.run(args, env=env, encoding="utf-8")
