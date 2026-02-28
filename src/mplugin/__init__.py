@@ -420,38 +420,40 @@ def _flock_exclusive(fileobj: io.TextIOWrapper) -> None:
 # cookie.py
 
 """Persistent dict to remember state between invocations.
-
-Cookies are used to remember file positions, counters and the like
-between plugin invocations. It is not intended for substantial amounts
-of data. Cookies are serialized into JSON and saved to a state file. We
-prefer a plain text format to allow administrators to inspect and edit
-its content. See :class:`~mplugin.logtail.LogTail` for an
-application of cookies to get only new lines of a continuously growing
-file.
-
-Cookies are locked exclusively so that at most one process at a time has
-access to it. Changes to the dict are not reflected in the file until
-:meth:`Cookie.commit` is called. It is recommended to use Cookie as
-context manager to get it opened and committed automatically.
 """
 
 
 class Cookie(UserDict[str, typing.Any]):
+    """Creates a persistent dict to keep state.
+
+    Cookies are used to remember file positions, counters and the like
+    between plugin invocations. It is not intended for substantial amounts
+    of data. Cookies are serialized into JSON and saved to a state file. We
+    prefer a plain text format to allow administrators to inspect and edit
+    its content. See :class:`~mplugin.logtail.LogTail` for an
+    application of cookies to get only new lines of a continuously growing
+    file.
+
+    Cookies are locked exclusively so that at most one process at a time has
+    access to it. Changes to the dict are not reflected in the file until
+    :meth:`Cookie.commit` is called. It is recommended to use Cookie as
+    context manager to get it opened and committed automatically.
+
+    After creation, a cookie behaves like a normal dict.
+
+    :param statefile: file name to save the dict's contents
+
+    .. note:: If `statefile` is empty or None, the Cookie will be
+        oblivous, i.e., it will forget its contents on garbage
+        collection. This makes it possible to explicitely throw away
+        state between plugin runs (for example by a command line
+        argument).
+    """
+
     path: typing.Optional[str]
 
     def __init__(self, statefile: typing.Optional[str] = None) -> None:
-        """Creates a persistent dict to keep state.
 
-        After creation, a cookie behaves like a normal dict.
-
-        :param statefile: file name to save the dict's contents
-
-        .. note:: If `statefile` is empty or None, the Cookie will be
-           oblivous, i.e., it will forget its contents on garbage
-           collection. This makes it possible to explicitely throw away
-           state between plugin runs (for example by a command line
-           argument).
-        """
         super(Cookie, self).__init__()
         self.path = statefile
         self.fobj = None
@@ -985,10 +987,7 @@ class _Runtime:
 
 """Structured representation for data points.
 
-This module contains the :class:`Metric` class whose instances are
-passed as value objects between most of mplugin's core classes.
-Typically, :class:`~.resource.Resource` objects emit a list of metrics
-as result of their :meth:`~.resource.Resource.probe` methods.
+
 """
 
 
@@ -1005,6 +1004,11 @@ class _MetricKwargs(typing.TypedDict, total=False):
 
 class Metric:
     """Single measured value.
+
+    This module contains the :class:`Metric` class whose instances are
+    passed as value objects between most of mplugin's core classes.
+    Typically, :class:`~.resource.Resource` objects emit a list of metrics
+    as result of their :meth:`~.resource.Resource.probe` methods.
 
     The value should be expressed in terms of base units, so
     Metric('swap', 10240, 'B') is better than Metric('swap', 10, 'kiB').
@@ -1135,21 +1139,21 @@ class Metric:
 # resource.py
 
 """Domain model for data :term:`acquisition`.
-
-:class:`Resource` is the base class for the plugin's :term:`domain
-model`. It shoul model the relevant details of reality that a plugin is
-supposed to check. The :class:`~.check.Check` controller calls
-:meth:`Resource.probe` on all passed resource objects to acquire data.
-
-Plugin authors should subclass :class:`Resource` and write
-whatever methods are needed to get the interesting bits of information.
-The most important resource subclass should be named after the plugin
-itself.
 """
 
 
 class Resource:
     """Abstract base class for custom domain models.
+
+    :class:`Resource` is the base class for the plugin's :term:`domain
+    model`. It shoul model the relevant details of reality that a plugin is
+    supposed to check. The :class:`~.check.Check` controller calls
+    :meth:`Resource.probe` on all passed resource objects to acquire data.
+
+    Plugin authors should subclass :class:`Resource` and write
+    whatever methods are needed to get the interesting bits of information.
+    The most important resource subclass should be named after the plugin
+    itself.
 
     Subclasses may add arguments to the constructor to parametrize
     information retrieval.
@@ -1499,6 +1503,23 @@ FmtMetric = str | typing.Callable[["Metric", "Context"], str]
 
 
 class Context:
+    """Creates generic context identified by `name`.
+
+    Generic contexts just format associated metrics and evaluate
+    always to :obj:`~mplugin.ok`. Metric formatting is
+    controlled with the :attr:`fmt_metric` attribute. It can either
+    be a string or a callable. See the :meth:`describe` method for
+    how formatting is done.
+
+    :param name: A context name that is matched by the context
+        attribute of :class:`~mplugin.Metric`
+    :param fmt_metric: string or callable to convert
+        context and associated metric to a human readable string
+    :param result_cls: use this class (usually a
+        :class:`~.result.Result` subclass) to represent the
+        evaluation outcome
+    """
+
     name: str
     fmt_metric: typing.Optional[FmtMetric]
     result_cls: type[Result]
@@ -1509,22 +1530,7 @@ class Context:
         fmt_metric: typing.Optional[FmtMetric] = None,
         result_cls: type[Result] = Result,
     ) -> None:
-        """Creates generic context identified by `name`.
 
-        Generic contexts just format associated metrics and evaluate
-        always to :obj:`~mplugin.ok`. Metric formatting is
-        controlled with the :attr:`fmt_metric` attribute. It can either
-        be a string or a callable. See the :meth:`describe` method for
-        how formatting is done.
-
-        :param name: A context name that is matched by the context
-            attribute of :class:`~mplugin.Metric`
-        :param fmt_metric: string or callable to convert
-            context and associated metric to a human readable string
-        :param result_cls: use this class (usually a
-            :class:`~.result.Result` subclass) to represent the
-            evaluation outcome
-        """
         self.name = name
         self.fmt_metric = fmt_metric
         self.result_cls = result_cls
@@ -1774,16 +1780,6 @@ class _Contexts:
 # check.py
 
 """Controller logic for check execution.
-
-This module contains the :class:`Check` class which orchestrates the
-the various stages of check execution. Interfacing with the
-outside system is done via a separate :class:`Runtime` object.
-
-When a check is called (using :meth:`Check.main` or
-:meth:`Check.__call__`), it probes all resources and evaluates the
-returned metrics to results and performance data. A typical usage
-pattern would be to populate a check with domain objects and then
-delegate control to it.
 """
 
 
@@ -1791,6 +1787,19 @@ _log = logging.getLogger(__name__)
 
 
 class Check:
+    """Controller logic for check execution.
+
+    The class :class:`Check` orchestrates the
+    the various stages of check execution. Interfacing with the
+    outside system is done via a separate :class:`Runtime` object.
+
+    When a check is called (using :meth:`Check.main` or
+    :meth:`Check.__call__`), it probes all resources and evaluates the
+    returned metrics to results and performance data. A typical usage
+    pattern would be to populate a check with domain objects and then
+    delegate control to it.
+    """
+
     resources: list[Resource]
     contexts: _Contexts
     summary: Summary
