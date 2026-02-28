@@ -15,7 +15,6 @@ Contents
    topic/index
    api
    glossary
-   history
 
 Indices and tables
 ==================

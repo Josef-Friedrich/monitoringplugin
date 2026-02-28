@@ -20,7 +20,7 @@ Data acquisition
 First, we will subclass :class:`~mplugin.resource.Resource` to generate metrics for the 1,
 5, and 15 minute load averages.
 
-.. literalinclude:: /../src/mplugin/examples/check_load.py
+.. literalinclude:: /../examples/check_load.py
    :start-after: # data acquisition
    :end-before: # data presentation
 
@@ -119,7 +119,7 @@ The last two points are already covered by the :class:`~mplugin.result.Result` d
 implementation, but we need to tweak the summary to display a load overview
 as stated in the first point:
 
-.. literalinclude:: /../src/mplugin/examples/check_load.py
+.. literalinclude:: /../examples/check_load.py
    :start-after: # data presentation
    :end-before: # runtime environment and data evaluation
 
@@ -137,7 +137,7 @@ Check setup
 
 The last step in this tutorial is to put the pieces together:
 
-.. literalinclude:: /../src/mplugin/examples/check_load.py
+.. literalinclude:: /../examples/check_load.py
    :start-after: # runtime environment and data evaluation
 
 In the :py:func:`main` function we parse the command line parameters using the
