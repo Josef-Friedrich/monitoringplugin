@@ -1,9 +1,10 @@
-#!python
+#! python
 """Monitoring plugin to check number of logged in users."""
 
 import argparse
 import logging
 import subprocess
+import typing
 
 import mplugin
 
@@ -19,11 +20,15 @@ class Users(mplugin.Resource):
 
     who_cmd = "who"
 
-    def __init__(self):
+    users: list[str]
+
+    unique_users: set[str]
+
+    def __init__(self) -> None:
         self.users = []
         self.unique_users = set()
 
-    def list_users(self):
+    def list_users(self) -> list[str]:
         """Return list of logged in users.
 
         The user list is determined by invoking an external command
@@ -32,7 +37,7 @@ class Users(mplugin.Resource):
         name at the beginning.
         """
         _log.info('querying users with "%s" command', self.who_cmd)
-        users = []
+        users: list[str] = []
         try:
             # subprocess context manager not implemented yet in py27
             # pylint: disable-next=consider-using-with
@@ -48,7 +53,7 @@ class Users(mplugin.Resource):
             )
         return users
 
-    def probe(self):
+    def probe(self) -> list[mplugin.Metric]:
         """Create check metric for user counts.
 
         This method returns two metrics: `total` is total number of user
@@ -75,9 +80,10 @@ class UsersSummary(mplugin.Summary):
     from the domain model object.
     """
 
-    def verbose(self, results):
-        if "total" in results:
-            return "users: " + ", ".join(results["total"].resource.users)
+    def verbose(self, results: mplugin.Results):
+        if "total" in results and results["total"].resource is not None:
+            resource = typing.cast(Users, results["total"].resource)
+            return "users: " + ", ".join(resource.users)
         return None
 
 

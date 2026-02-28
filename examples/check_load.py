@@ -23,11 +23,13 @@ class Load(mplugin.Resource):
     This check requires Linux-style /proc files to be present.
     """
 
-    def __init__(self, percpu=False):
+    percpu: bool
+
+    def __init__(self, percpu: bool = False) -> None:
         self.percpu = percpu
 
     @staticmethod
-    def cpus():
+    def cpus() -> int:
         _log.info('counting cpus with "nproc"')
         cpus = int(subprocess.check_output(["nproc"]))
         _log.debug("found %i cpus in total", cpus)
@@ -55,10 +57,10 @@ class LoadSummary(mplugin.Summary):
     contexts work well.
     """
 
-    def __init__(self, percpu):
+    def __init__(self, percpu: bool) -> None:
         self.percpu = percpu
 
-    def ok(self, results):
+    def ok(self, results: mplugin.Results) -> str:
         qualifier = "per cpu " if self.percpu else ""
         return "loadavg %sis %s" % (
             qualifier,
