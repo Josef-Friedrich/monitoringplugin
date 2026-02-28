@@ -2214,9 +2214,8 @@ TIMESPAN_FORMAT_HELP = """
 Timespan format
 ---------------
 
-If no time unit is specified, generally seconds are assumed.
-
-The following time units are understood:
+If no time unit is specified, generally seconds are assumed. The following time
+units are understood:
 
 - years, year, y (defined as 365.25 days)
 - months, month, M (defined as 30.44 days)
@@ -2228,11 +2227,13 @@ The following time units are understood:
 - milliseconds, millisecond, msec, ms
 - microseconds,  microsecond, usec, μs, μ, us
 
-Examples
---------
+The following are valid examples of timespan specifications:
 
+- `1`
+- `1.23`
 - `2.345s`
 - `3min 45.234s`
 - `34min`
 - `2 months 8 days`
+- `1h30m`
 """
