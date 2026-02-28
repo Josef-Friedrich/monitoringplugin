@@ -1955,6 +1955,9 @@ class Check:
             return 3
 
 
+# cli.py (argparse)
+
+
 class __CustomArgumentParser(argparse.ArgumentParser):
     """
     Override the exit method for the options ``--help``, ``-h`` and ``--version``,
@@ -1979,6 +1982,7 @@ def setup_argparser(
     copyright: typing.Optional[str] = None,
     description: typing.Optional[str] = None,
     epilog: typing.Optional[str] = None,
+    verbose: bool = False,
 ) -> argparse.ArgumentParser:
     """
     Set up and configure an argument parser for a monitoring plugin
@@ -1993,7 +1997,8 @@ def setup_argparser(
     :param name: The name of the plugin. If provided and doesn't start with
         ``check``, it will be prefixed with ``check_``.
     :param version: The version number of the plugin. If provided, it will be
-        included in the parser description.
+        included in the parser description. In addition, an option ``-V``,
+        ``--version`` is provided, which outputs the version number.
     :param license: The license type of the plugin. If provided, it will be
         included in the parser description.
     :param repository: The repository URL of the plugin. If provided, it will
@@ -2004,6 +2009,8 @@ def setup_argparser(
         If provided, it will be appended to the parser description after a
         blank line.
     :param epilog: Additional information to display after the help message.
+    :param verbose: Provide a ``-v``, ``--verbose`` option. The option can be
+        specified multiple times, e. g. ``-vvv``
 
     :returns: A configured ArgumentParser instance with RawDescriptionHelpFormatter,
         80 character width, and metadata assembled from the provided parameters.
@@ -2044,6 +2051,16 @@ def setup_argparser(
             "--version",
             action="version",
             version=f"%(prog)s {version}",
+        )
+
+    if verbose:
+        # https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/monitoring_plugins_interface/02.Input.md
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="count",
+            default=0,
+            help="Increase the output verbosity.",
         )
 
     return parser
