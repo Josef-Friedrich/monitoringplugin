@@ -182,13 +182,13 @@ RangeSpec = typing.Union[str, int, float, "Range"]
 class Range:
     """Represents a threshold range.
 
-    The general format is "[@][start:][end]". "start:" may be omitted if
-    start==0. "~:" means that start is negative infinity. If `end` is
+    The general format is ``[@][start:][end]``. ``start:`` may be omitted if
+    ``start==0``. ``~:`` means that start is negative infinity. If ``end`` is
     omitted, infinity is assumed. To invert the match condition, prefix
-    the range expression with "@".
+    the range expression with ``@``.
 
-    See
-    https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/definitions/01.range_expressions.md
+    See the
+    `Monitoring plugin guidelines <https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/definitions/01.range_expressions.md>`__
     for details.
     """
 
@@ -748,9 +748,12 @@ class Performance:
     between other mplugin objects.
 
     For sake of consistency, performance data should represent their values in
-    their respective base unit, so `Performance('size', 10000, 'B')` is better
-    than `Performance('size', 10, 'kB')`.
-    https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/monitoring_plugins_interface/03.Output.md#performance-data
+    their respective base unit, so ``Performance('size', 10000, 'B')`` is better
+    than ``Performance('size', 10, 'kB')``.
+
+    See the
+    `Monitoring plugin guidelines <https://github.com/monitoring-plugins/monitoring-plugin-guidelines/blob/main/monitoring_plugins_interface/03.Output.md#performance-data>`__
+    for details.
     """
 
     label: str
